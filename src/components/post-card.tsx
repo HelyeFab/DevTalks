@@ -1,82 +1,71 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
-import { Post } from '@/types/blog'
-import { formatDate } from '@/lib/utils'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { format } from 'date-fns'
+import type { BlogPost } from '@/types/blog'
 
-interface PostCardProps {
-  post: Post
+interface Props {
+  post: BlogPost
 }
 
-export function PostCard({ post }: PostCardProps) {
-  const [imageLoading, setImageLoading] = useState(true)
+export function PostCard({ post }: Props) {
+  const router = useRouter()
+
+  const handleCardClick = () => {
+    router.push(`/blog/${post.slug}`)
+  }
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group">
-      <article className="flex flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-dark-800 hover:border-primary-500 dark:hover:border-primary-500 transition-colors">
-        <div className="relative aspect-[16/9] w-full bg-gray-100 dark:bg-dark-800">
-          {post.image ? (
-            <>
-              {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-dark-800">
-                  <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-              <Image
-                src={post.image}
-                alt={post.imageAlt || post.title}
-                fill
-                className={`object-cover transition-all duration-300 ${
-                  imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
-                }`}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                loading="lazy"
-                onLoadingComplete={() => setImageLoading(false)}
-              />
-            </>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-600">
-              No cover image
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col flex-grow p-6">
-          <div className="flex-grow">
-            <h2 className="text-xl font-semibold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
-              {post.title}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-              {post.excerpt}
-            </p>
+    <article 
+      onClick={handleCardClick}
+      className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform hover:-translate-y-1 cursor-pointer"
+    >
+      <div className="relative aspect-[16/9] w-full">
+        {post.image ? (
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+            <span className="text-gray-400 dark:text-gray-500">No image</span>
           </div>
-
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <Image
-                src={post.author.image}
-                alt={`${post.author.name}'s avatar`}
-                width={24}
-                height={24}
-                className="rounded-full"
-                loading="lazy"
-              />
-              <span>{post.author.name}</span>
-            </div>
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
-          </div>
-
-          {!post.published && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="px-2 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
-                Draft
-              </span>
-            </div>
-          )}
+        )}
+      </div>
+      <div className="p-6">
+        <h3 className="text-2xl font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+          {post.title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+          {post.excerpt}
+        </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {post.tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-sm bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100 px-2 py-1 rounded"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
-      </article>
-    </Link>
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2">
+            <Image
+              src={post.author.image || '/images/default-avatar.svg'}
+              alt={`${post.author.name}'s avatar`}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span>{post.author.name}</span>
+          </div>
+          <time dateTime={post.date}>{format(new Date(post.date), 'MMM d, yyyy')}</time>
+        </div>
+      </div>
+    </article>
   )
 }

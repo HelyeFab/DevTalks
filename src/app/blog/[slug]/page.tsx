@@ -10,13 +10,16 @@ interface Props {
 
 export default async function BlogPost({ params }: Props) {
   try {
-    const post = await getPostBySlug(params.slug)
+    const { slug } = params
+    const post = await getPostBySlug(slug)
+    
     if (!post) {
       notFound()
     }
+
     return <BlogPostClient post={post} />
   } catch (error) {
-    console.error('Error loading post:', error)
+    console.error('Error fetching post:', error)
     notFound()
   }
 }
