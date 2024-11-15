@@ -1,12 +1,18 @@
+import { Metadata } from 'next'
 import Image from 'next/image'
 
-export default function HomePage() {
+export const metadata: Metadata = {
+  title: 'About - Emmanuel Fabiani',
+  description: 'Software engineer, writer, and creator.',
+}
+
+export default function AboutPage() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center">
         <div className="relative w-48 h-48">
           <Image
-            src="/images/profile.png"
+            src="/profile.jpg"
             alt="Emmanuel Fabiani"
             fill
             className="rounded-full object-cover"
@@ -16,7 +22,7 @@ export default function HomePage() {
 
         <h1 className="text-4xl font-bold text-center">Emmanuel Fabiani</h1>
         <h2 className="text-xl text-gray-600 dark:text-gray-400 text-center">
-          Software Engineer & Writer
+          Software Engineer & Writer Beano
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
@@ -32,7 +38,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="m-0 max-w-[30ch] text-sm opacity-50">
-              I'm Emmanuel, a software engineer based in Paris, France. I specialize in building
+              I'm Beano, a software engineer based in Paris, France. I specialize in building
               modern web applications with a focus on user experience and performance.
             </p>
           </a>

@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow admin to do anything
+    function isAdmin() {
+      return request.auth != null && 
+        request.auth.token.email == 'emmanuelfabiani23@gmail.com';
+    }
+
+    // Allow read access to anyone for public files
+    match /images/{imageId} {
+      allow read: if true;
+      // Only allow admin to write/delete
+      allow write, delete: if isAdmin();
+    }
+
+    // Default: deny all
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
