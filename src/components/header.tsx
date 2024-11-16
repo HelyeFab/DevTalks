@@ -79,14 +79,14 @@ export function Header() {
   const renderUserAvatar = () => {
     if (!user) return null
 
-    if (user.image && !imageError) {
+    if (user.photoURL && !imageError) {
       return (
         <img
-          src={user.image}
-          alt={user.name || 'User avatar'}
+          src={user.photoURL}
+          alt={user.displayName || 'User avatar'}
           className="h-8 w-8 rounded-full object-cover"
           onError={() => {
-            console.log('Failed to load profile image:', user.image)
+            console.log('Failed to load profile image:', user.photoURL)
             setImageError(true)
           }}
           referrerPolicy="no-referrer"
@@ -96,7 +96,7 @@ export function Header() {
 
     return (
       <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
-        {user.name ? getInitials(user.name) : 'U'}
+        {user.displayName ? getInitials(user.displayName) : 'U'}
       </div>
     )
   }
@@ -114,7 +114,7 @@ export function Header() {
         >
           {renderUserAvatar()}
           <span className="text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400">
-            {user.name || 'User'}
+            {user.displayName || 'User'}
           </span>
           <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
         </button>
@@ -246,7 +246,7 @@ export function Header() {
                         <>
                           <div className="flex items-center gap-2 py-2">
                             {renderUserAvatar()}
-                            <span className="text-gray-900 dark:text-gray-100">{user.name || 'User'}</span>
+                            <span className="text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</span>
                           </div>
                           {isAdmin && (
                             <Link

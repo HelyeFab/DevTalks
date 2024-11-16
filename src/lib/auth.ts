@@ -2,7 +2,7 @@ import { User } from 'firebase/auth'
 import { auth } from './firebase'
 
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
-const DEFAULT_AVATAR = '/images/default-avatar.svg'
+const DEFAULT_AVATAR = '/images/default-avatar.png'
 
 export async function getAuth() {
   return new Promise((resolve) => {

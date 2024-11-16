@@ -122,7 +122,7 @@ export default function NewPost() {
         author: {
           name: user.name || 'Admin',
           email: user.email!,
-          image: user.image || '/images/default-avatar.svg'
+          image: user.image || '/images/default-avatar.png'
         },
         date: new Date().toISOString(),
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
@@ -142,7 +142,7 @@ export default function NewPost() {
         author: {
           name: user.name || 'Admin',
           email: user.email!,
-          image: user.image || '/images/default-avatar.svg'
+          image: user.image || '/images/default-avatar.png'
         },
         date: new Date().toISOString(),
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),

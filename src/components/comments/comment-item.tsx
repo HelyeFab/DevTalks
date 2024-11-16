@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { MoreVertical, MessageSquare, Trash, Edit } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { useAuth } from '@/contexts/auth-context'
+import { type User } from 'firebase/auth'
 import { CommentForm } from './comment-form'
 import type { Comment } from '@/types/comment'
 
@@ -12,38 +12,64 @@ const DEFAULT_AVATAR = '/images/default-avatar.svg'
 
 interface Props {
   comment: Comment
-  onReply: (content: string) => Promise<void>
-  onEdit: (content: string) => Promise<void>
-  onDelete: () => Promise<void>
+  currentUser: User | null
+  onReply: (parentId: string, content: string) => Promise<void>
+  onEdit: (commentId: string, content: string) => Promise<void>
+  onDelete: (commentId: string) => void
 }
 
-export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
+export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }: Props) {
   const [isReplying, setIsReplying] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [showActions, setShowActions] = useState(false)
-  const { user } = useAuth()
 
-  const isAuthor = user?.id === comment.userId
+  // Check if the current user is the author of the comment
+  const isAuthor = Boolean(currentUser?.uid && comment.userId === currentUser.uid)
 
-  const handleReply = async (content: string) => {
-    await onReply(content)
-    setIsReplying(false)
-  }
+  console.log('Comment author check:', {
+    comment: {
+      id: comment.id,
+      userId: comment.userId,
+      author: {
+        name: comment.author.name,
+        email: comment.author.email
+      },
+      content: comment.content.substring(0, 20) + '...'
+    },
+    currentUser: currentUser ? {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      displayName: currentUser.displayName
+    } : null,
+    isAuthor
+  })
 
   const handleEdit = async (content: string) => {
-    await onEdit(content)
-    setIsEditing(false)
+    try {
+      await onEdit(comment.id, content)
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Error editing comment:', error)
+    }
   }
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this comment?')) {
-      await onDelete()
+  const handleDelete = () => {
+    onDelete(comment.id)
+    setShowActions(false)
+  }
+
+  const handleReply = async (content: string) => {
+    try {
+      await onReply(comment.id, content)
+      setIsReplying(false)
+    } catch (error) {
+      console.error('Error replying to comment:', error)
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+      <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
         <div className="flex items-start gap-4">
           {/* Author Image */}
           <div className="flex-shrink-0">
@@ -56,9 +82,9 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
                 className="rounded-full"
                 style={{ width: '40px', height: '40px' }}
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = DEFAULT_AVATAR;
-                  target.onerror = null; // Prevent infinite loop
+                  const target = e.target as HTMLImageElement
+                  target.src = DEFAULT_AVATAR
+                  target.onerror = null // Prevent infinite loop
                 }}
               />
             ) : (
@@ -74,14 +100,16 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
           </div>
 
           {/* Comment Content */}
-          <div className="flex-grow min-w-0">
+          <div className="min-w-0 flex-grow">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                   {comment.author.name}
                 </h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(comment.createdAt), {
+                    addSuffix: true,
+                  })}
                 </p>
               </div>
 
@@ -90,29 +118,26 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
                 <div className="relative">
                   <button
                     onClick={() => setShowActions(!showActions)}
-                    className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                   >
                     <MoreVertical className="h-5 w-5" />
                   </button>
 
                   {showActions && (
-                    <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
+                    <div className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                       <button
                         onClick={() => {
                           setIsEditing(true)
                           setShowActions(false)
                         }}
-                        className="w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                       >
                         <Edit className="h-4 w-4" />
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          handleDelete()
-                          setShowActions(false)
-                        }}
-                        className="w-full px-4 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        onClick={handleDelete}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                       >
                         <Trash className="h-4 w-4" />
                         Delete
@@ -124,26 +149,22 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
             </div>
 
             {isEditing ? (
-              <div className="mt-2">
-                <CommentForm
-                  postId={comment.postId}
-                  initialValue={comment.content}
-                  onSubmit={handleEdit}
-                  onCancel={() => setIsEditing(false)}
-                  submitLabel="Save"
-                />
-              </div>
+              <CommentForm
+                initialValue={comment.content}
+                onSubmit={handleEdit}
+                onCancel={() => setIsEditing(false)}
+              />
             ) : (
-              <div className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {comment.content}
+              <div className="mt-2">
+                <p className="text-gray-900 dark:text-gray-100">{comment.content}</p>
               </div>
             )}
 
             {/* Reply Button */}
-            {!isEditing && (
+            {currentUser && !isEditing && (
               <button
                 onClick={() => setIsReplying(!isReplying)}
-                className="mt-2 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                className="mt-2 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <MessageSquare className="h-4 w-4" />
                 Reply
@@ -157,11 +178,8 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
       {isReplying && (
         <div className="ml-12">
           <CommentForm
-            postId={comment.postId}
-            parentId={comment.id}
             onSubmit={handleReply}
             onCancel={() => setIsReplying(false)}
-            placeholder="Write a reply..."
             submitLabel="Reply"
           />
         </div>
@@ -174,6 +192,7 @@ export function CommentItem({ comment, onReply, onEdit, onDelete }: Props) {
             <CommentItem
               key={reply.id}
               comment={reply}
+              currentUser={currentUser}
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}

@@ -13,7 +13,7 @@ import { UpvoteButton } from '@/components/upvote-button'
 import { CommentSection } from '@/components/comments/comment-section'
 import { clsx } from 'clsx'
 
-const DEFAULT_AVATAR = '/images/default-avatar.svg'
+const DEFAULT_AVATAR = '/images/default-avatar.png'
 
 interface Props {
   post: BlogPost

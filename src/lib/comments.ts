@@ -1,19 +1,5 @@
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-  getDoc,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore'
-import { db } from './firebase'
 import type { Comment, CreateCommentData, UpdateCommentData } from '@/types/comment'
+import { db } from './firebase-admin'
 
 const COMMENTS_COLLECTION = 'comments'
 
@@ -21,12 +7,12 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
   console.log('Getting comments for post:', postId)
   try {
     // Get all comments for the post
-    const commentsQuery = query(
-      collection(db, COMMENTS_COLLECTION),
-      where('postId', '==', postId)
-    )
+    console.log('Creating query for comments collection...')
+    const commentsRef = db.collection(COMMENTS_COLLECTION)
+    const commentsQuery = commentsRef.where('postId', '==', postId)
 
-    const commentsSnapshot = await getDocs(commentsQuery)
+    console.log('Executing query...')
+    const commentsSnapshot = await commentsQuery.get()
     console.log('Found', commentsSnapshot.size, 'total comments')
 
     // Separate top-level comments and replies
@@ -67,6 +53,13 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
     return sortedComments
   } catch (error) {
     console.error('Error in getCommentsByPostId:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+    }
     throw error
   }
 }
@@ -74,29 +67,57 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
 export async function createComment(
   data: CreateCommentData,
   userId: string,
-  author: { name: string; image: string }
+  author: { name: string; image: string; email: string }
 ): Promise<Comment> {
   try {
+    // Create the comment data with all required fields
     const commentData = {
-      ...data,
+      content: data.content.trim(),
+      postId: data.postId,
       userId,
       author,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
-    const docRef = await addDoc(collection(db, COMMENTS_COLLECTION), commentData)
-    const docSnap = await getDoc(docRef)
+    console.log('Creating comment with data:', {
+      ...commentData,
+      content: commentData.content.substring(0, 20) + '...',
+      author: {
+        name: author.name,
+        image: author.image,
+        email: author.email
+      }
+    })
+
+    const docRef = await db.collection(COMMENTS_COLLECTION).add(commentData)
+    const docSnap = await docRef.get()
     const createdAt = new Date().toISOString()
 
-    return {
+    const newComment = {
       id: docRef.id,
       ...docSnap.data(),
       createdAt,
       updatedAt: createdAt,
     } as Comment
+
+    console.log('Comment created:', {
+      id: newComment.id,
+      userId: newComment.userId,
+      author: newComment.author,
+      content: newComment.content.substring(0, 20) + '...'
+    })
+
+    return newComment
   } catch (error) {
     console.error('Error in createComment:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+    }
     throw error
   }
 }
@@ -107,56 +128,59 @@ export async function updateComment(
   data: UpdateCommentData
 ): Promise<void> {
   try {
-    const commentRef = doc(db, COMMENTS_COLLECTION, commentId)
-    const commentSnap = await getDoc(commentRef)
+    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
+    const commentSnap = await commentRef.get()
 
-    if (!commentSnap.exists()) {
+    if (!commentSnap.exists) {
       throw new Error('Comment not found')
     }
 
-    if (commentSnap.data()?.userId !== userId) {
-      throw new Error('Unauthorized')
+    const commentData = commentSnap.data()
+    if (commentData?.userId !== userId) {
+      throw new Error('Not authorized to update this comment')
     }
 
-    await updateDoc(commentRef, {
+    await commentRef.update({
       ...data,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
     })
   } catch (error) {
     console.error('Error in updateComment:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+    }
     throw error
   }
 }
 
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   try {
-    const commentRef = doc(db, COMMENTS_COLLECTION, commentId)
-    const commentSnap = await getDoc(commentRef)
+    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
+    const commentSnap = await commentRef.get()
 
-    if (!commentSnap.exists()) {
+    if (!commentSnap.exists) {
       throw new Error('Comment not found')
     }
 
-    if (commentSnap.data()?.userId !== userId) {
-      throw new Error('Unauthorized')
+    const commentData = commentSnap.data()
+    if (commentData?.userId !== userId) {
+      throw new Error('Not authorized to delete this comment')
     }
 
-    // Delete all replies first
-    const repliesQuery = query(
-      collection(db, COMMENTS_COLLECTION),
-      where('parentId', '==', commentId)
-    )
-    const repliesSnapshot = await getDocs(repliesQuery)
-    
-    const deletePromises = repliesSnapshot.docs.map((replyDoc) =>
-      deleteDoc(doc(db, COMMENTS_COLLECTION, replyDoc.id))
-    )
-    await Promise.all(deletePromises)
-
-    // Delete the main comment
-    await deleteDoc(commentRef)
+    await commentRef.delete()
   } catch (error) {
     console.error('Error in deleteComment:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+    }
     throw error
   }
 }

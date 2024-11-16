@@ -12,7 +12,7 @@ interface UpvoteButtonProps {
 }
 
 export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const [upvotes, setUpvotes] = useState(initialUpvotes)
   const [isUpvoting, setIsUpvoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
@@ -20,21 +20,28 @@ export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
   useEffect(() => {
     // Check if user has already upvoted this post
     const checkUpvoteStatus = async () => {
-      if (user) {
-        const voted = await hasUserUpvoted(postId, user.uid)
-        setHasVoted(voted)
+      if (user?.id) {
+        try {
+          const voted = await hasUserUpvoted(postId, user.id)
+          setHasVoted(voted)
+        } catch (error) {
+          console.error('Error checking upvote status:', error)
+        }
       }
     }
-    checkUpvoteStatus()
-  }, [postId, user])
+
+    if (!loading) {
+      checkUpvoteStatus()
+    }
+  }, [postId, user, loading])
 
   const handleUpvote = async () => {
-    if (!user) return
+    if (!user?.id) return
     if (hasVoted || isUpvoting) return
 
     try {
       setIsUpvoting(true)
-      await upvotePost(postId, user.uid)
+      await upvotePost(postId, user.id)
       setUpvotes(prev => prev + 1)
       setHasVoted(true)
     } catch (error) {
@@ -51,8 +58,7 @@ export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
         className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
       >
         <Heart className="h-4 w-4" />
-        <span className="text-sm font-medium">{upvotes}</span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">(Sign in to upvote)</span>
+        <span>{upvotes}</span>
       </Link>
     )
   }
@@ -60,20 +66,15 @@ export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
   return (
     <button
       onClick={handleUpvote}
-      disabled={hasVoted || isUpvoting}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-        hasVoted
-          ? 'bg-pink-100 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400'
-          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-pink-50 dark:hover:bg-pink-900/10 hover:text-pink-600 dark:hover:text-pink-400'
-      }`}
-      title={hasVoted ? 'Already upvoted' : 'Upvote this post'}
+      disabled={isUpvoting || hasVoted}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <Heart
         className={`h-4 w-4 ${
-          hasVoted ? 'fill-current' : 'fill-transparent'
-        } ${isUpvoting ? 'animate-pulse' : ''}`}
+          hasVoted ? 'fill-current text-red-500' : 'text-current'
+        }`}
       />
-      <span className="text-sm font-medium">{upvotes}</span>
+      <span>{upvotes}</span>
     </button>
   )
 }

@@ -56,7 +56,7 @@ export function PostCard({ post }: Props) {
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-2">
             <Image
-              src={post.author.image || '/images/default-avatar.svg'}
+              src={post.author.image || '/images/default-avatar.png'}
               alt={`${post.author.name}'s avatar`}
               width={24}
               height={24}

@@ -7,6 +7,7 @@ export interface Comment {
   author: {
     name: string
     image: string
+    email: string
   }
   createdAt: string
   updatedAt: string
