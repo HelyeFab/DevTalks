@@ -12,6 +12,11 @@ service cloud.firestore {
         request.auth.token.email in ['emmanuelfabiani23@gmail.com'];
     }
 
+    function isCommentOwner() {
+      return isAuthenticated() &&
+        request.auth.uid == resource.data.userId;
+    }
+
     // Blog posts collection
     match /blog_posts/{postId} {
       // Anyone can list and read published posts
@@ -26,6 +31,19 @@ service cloud.firestore {
       allow update: if isAdmin() || 
         // Allow increment/decrement of upvotes
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']));
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      // Anyone can read comments
+      allow read: if true;
+      
+      // Only authenticated users can create comments
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      
+      // Only comment owner or admin can update/delete
+      allow update, delete: if isCommentOwner() || isAdmin();
     }
 
     // Post upvotes collection

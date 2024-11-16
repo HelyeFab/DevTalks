@@ -13,7 +13,7 @@ export default function SignIn() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/admin/dashboard')
+      router.push('/')
     }
   }, [user, loading, router])
 

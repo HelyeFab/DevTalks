@@ -76,7 +76,7 @@ export default function SignUp() {
       setError('')
       setLoading(true)
       await signUp(email, password, name)
-      router.push('/blog')
+      router.push('/')
     } catch (error) {
       console.error('Sign up error:', error)
       setError(getErrorMessage(error))

@@ -33,7 +33,8 @@
     "react-syntax-highlighter": "^15.6.1",
     "rehype-highlight": "^7.0.1",
     "rehype-slug": "^6.0.0",
-    "remark-gfm": "^4.0.0"
+    "remark-gfm": "^4.0.0",
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

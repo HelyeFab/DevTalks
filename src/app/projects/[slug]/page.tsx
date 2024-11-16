@@ -52,7 +52,9 @@ export default async function ProjectPage({ params }: Props) {
             src={project.image}
             alt={project.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             className="object-cover rounded-lg"
+            priority
           />
         </div>
 

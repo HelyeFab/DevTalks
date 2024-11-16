@@ -8,9 +8,9 @@ const geistSans = localFont({
   src: [
     {
       path: './fonts/GeistVF.woff',
-      weight: '100 900',
       style: 'normal',
-    }
+      weight: '100 900',
+    },
   ],
   variable: "--font-geist-sans",
   display: 'swap',
@@ -21,9 +21,9 @@ const geistMono = localFont({
   src: [
     {
       path: './fonts/GeistMonoVF.woff',
-      weight: '100 900',
       style: 'normal',
-    }
+      weight: '100 900',
+    },
   ],
   variable: "--font-geist-mono",
   display: 'swap',
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />

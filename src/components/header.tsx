@@ -23,7 +23,8 @@ export function Header() {
   const [imageError, setImageError] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-  const { user, loading, isAdmin, logout } = useAuth()
+
+  const { user, loading, isAdmin, signOut } = useAuth()
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -58,7 +59,7 @@ export function Header() {
 
   const confirmSignOut = async () => {
     try {
-      await logout()
+      await signOut()
       setShowSignOutModal(false)
       setMobileMenuOpen(false)
     } catch (error) {
@@ -78,26 +79,24 @@ export function Header() {
   const renderUserAvatar = () => {
     if (!user) return null
 
-    // If user has a photo URL and no error loading it
-    if (user.photoURL && !imageError) {
+    if (user.image && !imageError) {
       return (
         <img
-          src={user.photoURL}
-          alt={user.displayName || 'User avatar'}
+          src={user.image}
+          alt={user.name || 'User avatar'}
           className="h-8 w-8 rounded-full object-cover"
           onError={() => {
-            console.log('Failed to load profile image:', user.photoURL)
+            console.log('Failed to load profile image:', user.image)
             setImageError(true)
           }}
-          referrerPolicy="no-referrer" // Add this for Google photos
+          referrerPolicy="no-referrer"
         />
       )
     }
 
-    // Fallback to initials avatar
     return (
       <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
-        {user.displayName ? getInitials(user.displayName) : 'U'}
+        {user.name ? getInitials(user.name) : 'U'}
       </div>
     )
   }
@@ -105,11 +104,7 @@ export function Header() {
   const renderUserMenu = () => {
     if (!user) return null
 
-    console.log('Rendering user menu:', {
-      isAdmin,
-      userEmail: user.email,
-      adminEmails: process.env.NEXT_PUBLIC_ADMIN_EMAILS
-    })
+    console.log('Rendering user menu:', { isAdmin, userEmail: user.email })
 
     return (
       <div className="relative" ref={userMenuRef}>
@@ -119,30 +114,20 @@ export function Header() {
         >
           {renderUserAvatar()}
           <span className="text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400">
-            {user.displayName || 'User'}
+            {user.name || 'User'}
           </span>
           <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
         </button>
 
         {showUserMenu && (
           <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
-            {/* Show admin dashboard for admins */}
-            {isAdmin ? (
+            {isAdmin && (
               <Link
                 href="/admin/dashboard"
                 className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
                 onClick={() => setShowUserMenu(false)}
               >
                 Admin Dashboard
-              </Link>
-            ) : (
-              /* Show profile dashboard for regular users */
-              <Link
-                href="/user/profile"
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
-                onClick={() => setShowUserMenu(false)}
-              >
-                Profile Dashboard
               </Link>
             )}
             <button
@@ -193,8 +178,11 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-dark-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-800">
         <nav className="container mx-auto px-4 max-w-6xl flex items-center justify-between py-4">
-          <Link href="/" className="text-2xl font-bold hover:text-primary-600 transition-colors">
-            Emmanuel Fabiani
+          <Link
+            href="/"
+            className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
+          >
+            DevTalks
           </Link>
 
           <div className="flex items-center gap-4 md:hidden">
@@ -216,8 +204,8 @@ export function Header() {
           <div className="hidden md:flex items-center gap-6">
             {navigation.map((item) => (
               <Link
-                key={item.name}
                 href={item.href}
+                key={item.name}
                 className={clsx(
                   'text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors',
                   isActive(item.href) && 'text-primary-600 dark:text-primary-400'
@@ -226,6 +214,7 @@ export function Header() {
                 {item.name}
               </Link>
             ))}
+
             <div className="h-6 w-px bg-gray-200 dark:bg-dark-700" />
             {renderAuthLinks()}
             <ThemeToggle />
@@ -257,23 +246,15 @@ export function Header() {
                         <>
                           <div className="flex items-center gap-2 py-2">
                             {renderUserAvatar()}
-                            <span className="text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</span>
+                            <span className="text-gray-900 dark:text-gray-100">{user.name || 'User'}</span>
                           </div>
-                          {isAdmin ? (
+                          {isAdmin && (
                             <Link
                               href="/admin/dashboard"
                               onClick={() => setMobileMenuOpen(false)}
                               className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                             >
                               Admin Dashboard
-                            </Link>
-                          ) : (
-                            <Link
-                              href="/user/profile"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                            >
-                              Profile Dashboard
                             </Link>
                           )}
                           <button
@@ -333,7 +314,7 @@ export function Header() {
           </button>
           <button
             onClick={confirmSignOut}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
           >
             Sign Out
           </button>

@@ -226,9 +226,9 @@ export function ImagePicker({
               src={previewUrl}
               alt={altText || "Post cover"}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover rounded-lg"
               priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             <button
               onClick={handleRemove}

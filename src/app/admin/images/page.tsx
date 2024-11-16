@@ -130,10 +130,10 @@ export default function ImagesPage() {
               <div className="relative aspect-[16/9]">
                 <Image
                   src={image.url}
-                  alt={image.altText || image.originalName || 'Blog image'}
+                  alt={image.name}
                   fill
-                  className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover rounded-lg"
                 />
               </div>
               

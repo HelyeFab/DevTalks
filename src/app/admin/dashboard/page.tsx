@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 
 export default function AdminDashboard() {
-  const { user, loading, isAdmin, logout } = useAuth()
+  const { user, loading, isAdmin, signOut } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOut()
       router.push('/auth/signin')
     } catch (error) {
       console.error('Error logging out:', error)

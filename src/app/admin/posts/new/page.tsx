@@ -93,9 +93,21 @@ export default function NewPost() {
     }
   }
 
-  const handleSave = async (publish: boolean = false) => {
-    if (!title || !content) {
-      setErrorMessage('Title and content are required')
+  const handleSave = async (publish = false) => {
+    if (!title) {
+      setErrorMessage('Title is required')
+      setShowErrorModal(true)
+      return
+    }
+
+    if (!content) {
+      setErrorMessage('Content is required')
+      setShowErrorModal(true)
+      return
+    }
+
+    if (!user) {
+      setErrorMessage('You must be logged in to create a post')
       setShowErrorModal(true)
       return
     }
@@ -108,9 +120,9 @@ export default function NewPost() {
         content: content.slice(0, 100) + '...', // Log first 100 chars of content
         tags: tags.map(tag => tag.name),
         author: {
-          name: user?.displayName || 'Admin',
-          email: user?.email!,
-          image: user?.photoURL || '/images/default-avatar.svg'
+          name: user.name || 'Admin',
+          email: user.email!,
+          image: user.image || '/images/default-avatar.svg'
         },
         date: new Date().toISOString(),
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
@@ -128,15 +140,16 @@ export default function NewPost() {
         image,
         imageAlt,
         author: {
-          name: user?.displayName || 'Admin',
-          email: user?.email!,
-          image: user?.photoURL || '/images/default-avatar.svg'
+          name: user.name || 'Admin',
+          email: user.email!,
+          image: user.image || '/images/default-avatar.svg'
         },
         date: new Date().toISOString(),
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         published: publish
       }
 
+      // Create post using the blog service
       await createPost(post)
       console.log('Post created successfully')
       router.push('/admin/posts')

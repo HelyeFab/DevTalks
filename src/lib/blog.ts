@@ -10,7 +10,11 @@ import {
   FirestoreError,
   increment,
   runTransaction,
-  limit
+  limit,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  DocumentData
 } from 'firebase/firestore'
 import { db } from './firebase'
 
@@ -45,227 +49,220 @@ class BlogError extends Error {
 const COLLECTION_NAME = 'blog_posts'
 const UPVOTES_COLLECTION = 'post_upvotes'
 
-// Server-side functions
-export async function createPost(post: Omit<BlogPost, 'id'>): Promise<string> {
-  try {
-    const response = await fetch('/api/blog', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
-    })
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to create post')
-    }
-    
-    return data.id
-  } catch (error) {
-    console.error('Error in createPost:', error)
-    throw new BlogError('Failed to create post')
+// Helper function to convert Firestore data to BlogPost
+function convertPost(id: string, data: DocumentData): BlogPost {
+  return {
+    id,
+    title: data.title,
+    subtitle: data.subtitle,
+    content: data.content,
+    excerpt: data.excerpt,
+    image: data.image,
+    imageAlt: data.imageAlt,
+    tags: data.tags || [],
+    author: data.author,
+    date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
+    slug: data.slug,
+    published: data.published,
+    publishedAt: data.publishedAt instanceof Timestamp ? data.publishedAt.toDate().toISOString() : data.publishedAt,
+    upvotes: data.upvotes || 0
   }
 }
 
-export async function updatePost(id: string, post: Partial<BlogPost>): Promise<void> {
+// Server-side functions
+export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> {
   try {
-    const response = await fetch(`/api/blog/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+      ...post,
+      date: post.date || new Date().toISOString(),
+      upvotes: 0,
     })
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to update post')
+
+    return {
+      id: docRef.id,
+      ...post,
+      upvotes: 0,
     }
   } catch (error) {
-    console.error('Error in updatePost:', error)
-    throw new BlogError('Failed to update post')
+    console.error('Error creating post:', error)
+    throw new BlogError(
+      'Failed to create post',
+      error as FirestoreError
+    )
+  }
+}
+
+export async function updatePost(post: BlogPost): Promise<BlogPost> {
+  try {
+    if (!post.id) {
+      throw new Error('Post ID is required')
+    }
+
+    const docRef = doc(db, COLLECTION_NAME, post.id)
+    await updateDoc(docRef, {
+      ...post,
+      updatedAt: new Date().toISOString(),
+    })
+
+    return post
+  } catch (error) {
+    console.error('Error updating post:', error)
+    throw new BlogError(
+      'Failed to update post',
+      error as FirestoreError
+    )
   }
 }
 
 export async function deletePost(id: string): Promise<void> {
   try {
-    const response = await fetch(`/api/blog/${id}`, {
-      method: 'DELETE'
-    })
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to delete post')
-    }
+    const docRef = doc(db, COLLECTION_NAME, id)
+    await deleteDoc(docRef)
   } catch (error) {
-    console.error('Error in deletePost:', error)
-    throw new BlogError('Failed to delete post')
+    console.error('Error deleting post:', error)
+    throw new BlogError(
+      'Failed to delete post',
+      error as FirestoreError
+    )
   }
 }
 
 export async function getPost(id: string): Promise<BlogPost | null> {
   try {
-    const response = await fetch(`/api/blog/${id}`)
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to fetch post')
+    const docRef = doc(db, COLLECTION_NAME, id)
+    const docSnap = await getDoc(docRef)
+
+    if (!docSnap.exists()) {
+      return null
     }
-    
-    return data.post
+
+    return convertPost(docSnap.id, docSnap.data())
   } catch (error) {
-    console.error('Error in getPost:', error)
-    throw new BlogError('Failed to fetch post')
+    console.error('Error getting post:', error)
+    throw new BlogError(
+      'Failed to get post',
+      error as FirestoreError
+    )
   }
 }
 
 export async function getAllPosts(publishedOnly = true): Promise<BlogPost[]> {
   try {
-    console.log('Fetching all posts')
     let q = query(
       collection(db, COLLECTION_NAME),
-      orderBy('date', 'desc'),
-      limit(50)
+      orderBy('date', 'desc')
     )
 
     if (publishedOnly) {
-      q = query(q, where('published', '==', true))
+      q = query(
+        q,
+        where('published', '==', true)
+      )
     }
 
     const querySnapshot = await getDocs(q)
-    const posts = querySnapshot.docs.map(doc => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        title: data.title,
-        subtitle: data.subtitle,
-        content: data.content,
-        excerpt: data.excerpt,
-        image: data.image,
-        imageAlt: data.imageAlt,
-        tags: data.tags,
-        author: data.author,
-        date: data.date.toDate().toISOString(),
-        slug: data.slug,
-        published: data.published,
-        publishedAt: data.publishedAt?.toDate()?.toISOString(),
-        upvotes: data.upvotes
-      } as BlogPost
-    })
-
-    console.log('Posts fetched successfully:', {
-      count: posts.length,
-      postsWithImages: posts.filter(p => !!p.image).length
-    })
-    return posts
+    return querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()))
   } catch (error) {
-    console.error('Error in getAllPosts:', error)
-    return []
+    console.error('Error getting posts:', error)
+    throw new BlogError(
+      'Failed to get posts',
+      error as FirestoreError
+    )
   }
 }
 
 export async function getPostBySlug(slug: string, includeDrafts = false): Promise<BlogPost | null> {
   try {
-    console.log('Fetching post by slug:', slug)
-    const q = query(
+    let q = query(
       collection(db, COLLECTION_NAME),
       where('slug', '==', slug),
-      where('published', '==', true),
       limit(1)
     )
-    const querySnapshot = await getDocs(q)
 
+    if (!includeDrafts) {
+      q = query(
+        q,
+        where('published', '==', true)
+      )
+    }
+
+    const querySnapshot = await getDocs(q)
+    
     if (querySnapshot.empty) {
-      console.log('Post not found:', slug)
       return null
     }
 
     const doc = querySnapshot.docs[0]
-    const data = doc.data()
-
-    if (!includeDrafts && !data.published) {
-      console.log('Post is not published:', slug)
-      return null
-    }
-
-    const post: BlogPost = {
-      id: doc.id,
-      title: data.title,
-      subtitle: data.subtitle,
-      content: data.content,
-      excerpt: data.excerpt,
-      image: data.image,
-      imageAlt: data.imageAlt,
-      tags: data.tags,
-      author: data.author,
-      date: data.date.toDate().toISOString(),
-      slug: data.slug,
-      published: data.published,
-      publishedAt: data.publishedAt?.toDate()?.toISOString(),
-      upvotes: data.upvotes
-    }
-
-    console.log('Post fetched successfully:', {
-      slug,
-      hasImage: !!post.image
-    })
-    return post
+    return convertPost(doc.id, doc.data())
   } catch (error) {
-    console.error('Error in getPostBySlug:', error)
-    return null
+    console.error('Error getting post by slug:', error)
+    throw new BlogError(
+      'Failed to get post by slug',
+      error as FirestoreError
+    )
   }
 }
 
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   try {
-    const response = await fetch(`/api/blog?tag=${encodeURIComponent(tag)}`)
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to fetch posts')
-    }
-    
-    return data.posts
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('tags', 'array-contains', tag),
+      where('published', '==', true),
+      orderBy('date', 'desc')
+    )
+
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()))
   } catch (error) {
-    console.error('Error in getPostsByTag:', error)
-    throw new BlogError('Failed to fetch posts')
+    console.error('Error getting posts by tag:', error)
+    throw new BlogError(
+      'Failed to get posts by tag',
+      error as FirestoreError
+    )
   }
 }
 
 // Client-side only functions
 export async function upvotePost(postId: string, userId: string): Promise<void> {
-  if (!userId) {
-    throw new BlogError('Must be logged in to upvote')
-  }
-
   try {
     await runTransaction(db, async (transaction) => {
-      const upvoteRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
-      const upvoteDoc = await transaction.get(upvoteRef)
-
-      if (upvoteDoc.exists()) {
-        throw new BlogError('Already upvoted this post')
-      }
-
+      // Get the post document
       const postRef = doc(db, COLLECTION_NAME, postId)
       const postDoc = await transaction.get(postRef)
 
       if (!postDoc.exists()) {
-        throw new BlogError('Post not found')
+        throw new Error('Post not found')
       }
 
-      transaction.set(upvoteRef, {
-        postId,
-        userId,
-        timestamp: Timestamp.now()
-      })
+      // Get or create the upvote document
+      const upvoteRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
+      const upvoteDoc = await transaction.get(upvoteRef)
 
-      transaction.update(postRef, {
-        upvotes: increment(1)
-      })
+      if (upvoteDoc.exists()) {
+        // User has already upvoted, remove the upvote
+        transaction.delete(upvoteRef)
+        transaction.update(postRef, {
+          upvotes: increment(-1)
+        })
+      } else {
+        // User hasn't upvoted yet, add the upvote
+        transaction.set(upvoteRef, {
+          userId,
+          postId,
+          createdAt: new Date().toISOString()
+        })
+        transaction.update(postRef, {
+          upvotes: increment(1)
+        })
+      }
     })
-
-    console.log('Post upvoted successfully:', { postId, userId })
   } catch (error) {
-    console.error('Error in upvotePost:', error)
-    throw new BlogError('Failed to upvote post')
+    console.error('Error upvoting post:', error)
+    throw new BlogError(
+      'Failed to upvote post',
+      error as FirestoreError
+    )
   }
 }
 
@@ -273,9 +270,9 @@ export async function hasUserUpvoted(postId: string, userId: string | null): Pro
   if (!userId) return false
 
   try {
-    const upvoteRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
-    const upvoteDoc = await getDoc(upvoteRef)
-    return upvoteDoc.exists()
+    const docRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
+    const docSnap = await getDoc(docRef)
+    return docSnap.exists()
   } catch (error) {
     console.error('Error checking upvote status:', error)
     return false
