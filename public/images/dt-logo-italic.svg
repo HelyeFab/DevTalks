@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="48" height="48" rx="12" fill="#ec4899"/>
+  <!-- D -->
+  <path d="M8 12h10c4.418 0 8 3.582 8 8s-3.582 8-8 8H8V12zm4 4v8h6c2.209 0 4-1.791 4-4s-1.791-4-4-4h-6z" fill="white" transform="skewX(-12)"/>
+  <!-- T -->
+  <path d="M26 12h16v4h-6v16h-4V16h-6v-4z" fill="white" transform="skewX(-12)"/>
+</svg>

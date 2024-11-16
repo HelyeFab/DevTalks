@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Reset default margins */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

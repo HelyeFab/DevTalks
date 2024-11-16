@@ -121,6 +121,13 @@ export function Header() {
 
         {showUserMenu && (
           <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+            <Link
+              href="/profile"
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
+              onClick={() => setShowUserMenu(false)}
+            >
+              Profile
+            </Link>
             {isAdmin && (
               <Link
                 href="/admin/dashboard"
@@ -176,13 +183,20 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-dark-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-800">
-        <nav className="container mx-auto px-4 max-w-6xl flex items-center justify-between py-4">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-dark-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700">
+        <nav className="container mx-auto px-6 max-w-6xl flex items-center justify-between h-16">
           <Link
             href="/"
-            className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
+            className="flex items-center gap-3 group"
           >
-            DevTalks
+            <span className="font-display text-4xl font-bold text-pink-600 group-hover:text-pink-700 dark:text-pink-500 dark:hover:text-pink-400 transition-colors drop-shadow-sm">
+              DevTalks
+            </span>
+            <img
+              src="/images/dt-logo-italic.svg"
+              alt="DT"
+              className="h-10 w-10"
+            />
           </Link>
 
           <div className="flex items-center gap-4 md:hidden">

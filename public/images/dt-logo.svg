@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @font-face {
+      font-family: 'Playfair Display';
+      font-style: italic;
+      src: url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1');
+    }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-weight: bold;
+      font-size: 24px;
+    }
+  </style>
+  <text x="50%" y="50%" text-anchor="middle" dy=".35em" class="logo-text" fill="currentColor">
+    DT
+  </text>
+</svg>
