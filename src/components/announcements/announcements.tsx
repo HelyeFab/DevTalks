@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAdmin } from '@/contexts/admin-context'
 import { Announcement } from '@/types/announcement'
-import { PlusCircle, StickyNote } from 'lucide-react'
+import { PlusCircle, Pin, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
-import { AnnouncementItem } from './announcement-item'
+import Image from 'next/image'
+import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
 import { CreateAnnouncementModal } from './create-announcement-modal'
 
 interface Props {
@@ -39,10 +41,22 @@ export function Announcements({ type = 'all' }: Props) {
       console.log('Fetched announcements:', { count: data.length })
       
       if (Array.isArray(data)) {
-        // Filter announcements based on type
-        const filteredAnnouncements = type === 'sticky' 
-          ? data.filter(announcement => announcement.isSticky)
-          : data
+        // Filter active announcements
+        let filteredAnnouncements = data.filter(announcement => announcement.status === 'active')
+
+        // Filter based on type
+        if (type === 'sticky') {
+          filteredAnnouncements = filteredAnnouncements.filter(announcement => announcement.isSticky)
+        } else {
+          // For 'all' type, show sticky ones first, then latest 3 non-sticky
+          const stickyAnnouncements = filteredAnnouncements.filter(announcement => announcement.isSticky)
+          const nonStickyAnnouncements = filteredAnnouncements
+            .filter(announcement => !announcement.isSticky)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3)
+
+          filteredAnnouncements = [...stickyAnnouncements, ...nonStickyAnnouncements]
+        }
 
         setAnnouncements(filteredAnnouncements)
       } else {
@@ -57,7 +71,7 @@ export function Announcements({ type = 'all' }: Props) {
     }
   }
 
-  const handleCreate = async (data: { title: string; content: string; isSticky: boolean }) => {
+  const handleCreate = async (data: { title: string; content: string; markdownContent: string; isSticky: boolean; status: 'active' | 'inactive' }) => {
     if (!user) return
 
     try {
@@ -97,68 +111,19 @@ export function Announcements({ type = 'all' }: Props) {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`/api/announcements/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user?.getIdToken()}`
-        }
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      setAnnouncements(prev => prev.filter(announcement => announcement.id !== id))
-      toast.success('Announcement deleted successfully')
-    } catch (error) {
-      console.error('Error deleting announcement:', error instanceof Error ? error.message : 'Unknown error')
-      toast.error('Failed to delete announcement. Please try again.')
-    }
-  }
-
-  const handleToggleSticky = async (id: string, isSticky: boolean) => {
-    try {
-      const response = await fetch(`/api/announcements/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user?.getIdToken()}`
-        },
-        body: JSON.stringify({ isSticky })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      // If we're in sticky view and unsticking, remove from list
-      if (type === 'sticky' && !isSticky) {
-        setAnnouncements(prev => prev.filter(announcement => announcement.id !== id))
-      } else {
-        setAnnouncements(prev => prev.map(announcement => 
-          announcement.id === id ? { ...announcement, isSticky } : announcement
-        ))
-      }
-
-      toast.success(`Announcement ${isSticky ? 'pinned' : 'unpinned'} successfully`)
-    } catch (error) {
-      console.error('Error updating announcement:', error instanceof Error ? error.message : 'Unknown error')
-      toast.error('Failed to update announcement. Please try again.')
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+          {isAdmin && <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32" />}
+        </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-2">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            </div>
           ))}
         </div>
       </div>
@@ -168,7 +133,7 @@ export function Announcements({ type = 'all' }: Props) {
   if (error) {
     return (
       <div className="text-center py-8">
-        <StickyNote className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600 dark:text-gray-400">{error}</p>
         <button
           onClick={fetchAnnouncements}
@@ -197,25 +162,48 @@ export function Announcements({ type = 'all' }: Props) {
         )}
       </div>
 
-      {announcements.length > 0 ? (
-        <div className="space-y-4">
-          {announcements.map((announcement) => (
-            <AnnouncementItem
-              key={announcement.id}
-              announcement={announcement}
-              onDelete={handleDelete}
-              onToggleSticky={handleToggleSticky}
-              isAdmin={isAdmin}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="text-center py-8 text-gray-600 dark:text-gray-400">
-          {type === 'sticky' 
-            ? 'No sticky notes yet'
-            : 'No announcements yet'}
-        </p>
-      )}
+      <div className="space-y-4">
+        {announcements.map((announcement) => (
+          <Link
+            key={announcement.id}
+            href={`/announcements/${announcement.id}`}
+            className="block bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 hover:ring-2 hover:ring-pink-500 dark:hover:ring-pink-400 transition-all"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Image
+                src={announcement.author.image || '/images/default-avatar.svg'}
+                alt={announcement.author.name}
+                width={24}
+                height={24}
+                className="rounded-full"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{announcement.author.name}</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}
+                </span>
+                {announcement.isSticky && (
+                  <span className="text-xs bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400 px-2 py-0.5 rounded-full">
+                    Pinned
+                  </span>
+                )}
+              </div>
+            </div>
+            <h3 className="font-semibold mb-1">{announcement.title}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+              {announcement.content}
+            </p>
+          </Link>
+        ))}
+
+        {announcements.length === 0 && (
+          <p className="text-center py-8 text-gray-600 dark:text-gray-400">
+            {type === 'sticky' 
+              ? 'No sticky notes yet'
+              : 'No announcements yet'}
+          </p>
+        )}
+      </div>
 
       {showCreateModal && (
         <CreateAnnouncementModal

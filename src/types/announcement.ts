@@ -2,6 +2,7 @@ export interface Announcement {
   id: string
   title: string
   content: string
+  markdownContent: string
   createdAt: string
   updatedAt: string | null
   isSticky: boolean
@@ -16,6 +17,7 @@ export interface Announcement {
 export interface CreateAnnouncementData {
   title: string
   content: string
+  markdownContent: string
   isSticky: boolean
   status: 'active' | 'inactive'
   author: {
@@ -28,6 +30,7 @@ export interface CreateAnnouncementData {
 export interface UpdateAnnouncementData {
   title?: string
   content?: string
+  markdownContent?: string
   isSticky?: boolean
   status?: 'active' | 'inactive'
 }
