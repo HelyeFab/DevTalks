@@ -5,7 +5,7 @@ import { projects } from '@/data/projects'
 import { ProjectSlideshow } from '@/components/project-slideshow'
 
 export const metadata: Metadata = {
-  title: 'About - DevTalks',
+  title: 'About',
   description: 'Software engineer, writer, and creator.',
 }
 

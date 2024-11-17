@@ -1,6 +1,7 @@
 import type { Comment, CreateCommentData, UpdateCommentData } from '@/types/comment'
 import { db } from './firebase-admin'
 
+const POSTS_COLLECTION = 'blog_posts'
 const COMMENTS_COLLECTION = 'comments'
 
 export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
@@ -8,8 +9,8 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
   try {
     // Get all comments for the post
     console.log('Creating query for comments collection...')
-    const commentsRef = db.collection(COMMENTS_COLLECTION)
-    const commentsQuery = commentsRef.where('postId', '==', postId)
+    const commentsRef = db.collection(POSTS_COLLECTION).doc(postId).collection(COMMENTS_COLLECTION)
+    const commentsQuery = commentsRef.orderBy('createdAt', 'desc')
 
     console.log('Executing query...')
     const commentsSnapshot = await commentsQuery.get()
@@ -25,52 +26,43 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
         id: doc.id,
         ...data,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
       } as Comment
 
       if (data.parentId) {
-        // This is a reply
-        if (!repliesMap.has(data.parentId)) {
-          repliesMap.set(data.parentId, [])
-        }
-        repliesMap.get(data.parentId)?.push(comment)
+        const replies = repliesMap.get(data.parentId) || []
+        replies.push(comment)
+        repliesMap.set(data.parentId, replies)
       } else {
-        // This is a top-level comment
         topLevelComments.push(comment)
       }
     })
 
     // Sort comments and attach replies
-    const sortedComments = topLevelComments
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .map(comment => ({
-        ...comment,
-        replies: (repliesMap.get(comment.id) || [])
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      }))
+    const sortedComments = topLevelComments.map(comment => ({
+      ...comment,
+      replies: (repliesMap.get(comment.id) || [])
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    }))
 
-    console.log('Processed comments:', sortedComments.length, 'top-level,', repliesMap.size, 'with replies')
+    console.log('Processed comments:', {
+      topLevel: topLevelComments.length,
+      withReplies: sortedComments.length
+    })
+
     return sortedComments
   } catch (error) {
-    console.error('Error in getCommentsByPostId:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in getCommentsByPostId:', error instanceof Error ? error.message : 'Unknown error')
     throw error
   }
 }
 
 export async function createComment(
-  data: CreateCommentData,
   userId: string,
-  author: { name: string; image: string; email: string }
+  author: { name: string; email: string; image?: string },
+  data: CreateCommentData
 ): Promise<Comment> {
   try {
-    // Create the comment data with all required fields
     const commentData = {
       content: data.content.trim(),
       postId: data.postId,
@@ -78,6 +70,7 @@ export async function createComment(
       author,
       createdAt: new Date(),
       updatedAt: new Date(),
+      parentId: data.parentId || null
     }
 
     console.log('Creating comment with data:', {
@@ -90,7 +83,7 @@ export async function createComment(
       }
     })
 
-    const docRef = await db.collection(COMMENTS_COLLECTION).add(commentData)
+    const docRef = await db.collection(POSTS_COLLECTION).doc(data.postId).collection(COMMENTS_COLLECTION).add(commentData)
     const docSnap = await docRef.get()
     const createdAt = new Date().toISOString()
 
@@ -99,25 +92,17 @@ export async function createComment(
       ...docSnap.data(),
       createdAt,
       updatedAt: createdAt,
+      replies: []
     } as Comment
 
-    console.log('Comment created:', {
+    console.log('Comment created successfully:', {
       id: newComment.id,
-      userId: newComment.userId,
-      author: newComment.author,
       content: newComment.content.substring(0, 20) + '...'
     })
 
     return newComment
   } catch (error) {
-    console.error('Error in createComment:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in createComment:', error instanceof Error ? error.message : 'Unknown error')
     throw error
   }
 }
@@ -128,7 +113,7 @@ export async function updateComment(
   data: UpdateCommentData
 ): Promise<void> {
   try {
-    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
+    const commentRef = db.collection(POSTS_COLLECTION).doc(data.postId).collection(COMMENTS_COLLECTION).doc(commentId)
     const commentSnap = await commentRef.get()
 
     if (!commentSnap.exists) {
@@ -142,24 +127,22 @@ export async function updateComment(
 
     await commentRef.update({
       ...data,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
   } catch (error) {
-    console.error('Error in updateComment:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in updateComment:', error instanceof Error ? error.message : 'Unknown error')
     throw error
   }
 }
 
-export async function deleteComment(commentId: string, userId: string): Promise<void> {
+export async function deleteComment(
+  commentId: string,
+  userId: string,
+  isAdmin: boolean = false,
+  postId: string
+): Promise<boolean> {
   try {
-    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
+    const commentRef = db.collection(POSTS_COLLECTION).doc(postId).collection(COMMENTS_COLLECTION).doc(commentId)
     const commentSnap = await commentRef.get()
 
     if (!commentSnap.exists) {
@@ -167,20 +150,14 @@ export async function deleteComment(commentId: string, userId: string): Promise<
     }
 
     const commentData = commentSnap.data()
-    if (commentData?.userId !== userId) {
-      throw new Error('Not authorized to delete this comment')
+    if (!isAdmin && commentData?.userId !== userId) {
+      return false
     }
 
     await commentRef.delete()
+    return true
   } catch (error) {
-    console.error('Error in deleteComment:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in deleteComment:', error instanceof Error ? error.message : 'Unknown error')
     throw error
   }
 }

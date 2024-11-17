@@ -1,38 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCommentsByPostId, createComment } from '@/lib/comments'
+import { createComment } from '@/lib/comments'
 import { CreateCommentData } from '@/types/comment'
 import { getAuth } from '@/lib/firebase-admin'
-import { getFirestore } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
 const DEFAULT_AVATAR = '/images/default-avatar.svg'
 
 type RouteContext = {
-  params: { postId: string }
-}
-
-export async function GET(request: NextRequest, context: RouteContext) {
-  console.log('\n--- Starting comments fetch ---')
-  const postId = context.params.postId
-
-  try {
-    console.log('Fetching comments for post:', { postId })
-    const comments = await getCommentsByPostId(postId)
-    console.log('Found comments:', { count: comments.length })
-    return NextResponse.json(comments)
-  } catch (error) {
-    console.error('Error in GET /api/posts/[postId]/comments:', error instanceof Error ? error.message : 'Unknown error')
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to fetch comments' }, { status: 500 })
-  }
+  params: { postId: string; commentId: string }
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  console.log('\n--- Starting comment creation ---')
-  const postId = context.params.postId
+  console.log('\n--- Starting reply creation ---')
+  const { postId, commentId } = context.params
 
   try {
-    console.log('Creating comment for post:', { postId })
+    console.log('Creating reply for comment:', { postId, commentId })
 
     // Get authorization header
     const authHeader = request.headers.get('Authorization')
@@ -69,13 +53,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const data = await request.json() as CreateCommentData
       console.log('Request body:', { 
         content: data.content?.substring(0, 50),
-        postId: data.postId,
-        parentId: data.parentId
+        postId,
+        parentId: commentId
       })
 
-      // Create the comment
-      console.log('Creating comment...')
-      const newComment = await createComment(
+      // Create the reply
+      console.log('Creating reply...')
+      const newReply = await createComment(
         decodedToken.uid,
         {
           name: data.author.name,
@@ -84,12 +68,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         },
         {
           ...data,
-          postId // Use the postId from params
+          postId,
+          parentId: commentId
         }
       )
-      console.log('Comment created successfully')
+      console.log('Reply created successfully')
 
-      return NextResponse.json(newComment)
+      return NextResponse.json(newReply)
     } catch (error) {
       console.error('Error verifying token:', error instanceof Error ? error.message : 'Unknown error')
       return NextResponse.json(
@@ -98,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       )
     }
   } catch (error) {
-    console.error('Error in POST /api/posts/[postId]/comments:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('Error in POST /api/posts/[postId]/comments/[commentId]/replies:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

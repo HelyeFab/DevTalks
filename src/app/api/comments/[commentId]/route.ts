@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateComment, deleteComment } from '@/lib/comments'
 import { getAuth } from '@/lib/firebase-admin'
+import { getFirestore } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
 type RouteContext = {
   params: { commentId: string }
+}
+
+async function isAdmin(uid: string): Promise<boolean> {
+  try {
+    const db = getFirestore()
+    const profileRef = db.collection('profiles').doc(uid)
+    const profile = await profileRef.get()
+    return profile.exists && profile.data()?.isAdmin === true
+  } catch (error) {
+    console.error('Error checking admin status:', error)
+    return false
+  }
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
@@ -48,72 +61,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
       // Get request body
       const { content } = await request.json()
-      console.log('Request body:', { 
-        content: content?.substring(0, 20),
-        contentLength: content?.length
-      })
-      
-      if (!content?.trim()) {
-        console.error('Empty comment content')
-        return NextResponse.json(
-          { error: 'Comment content is required' },
-          { status: 400 }
-        )
-      }
+      console.log('Request body:', { content: content?.substring(0, 50) })
 
       // Update the comment
-      await updateComment(commentId, decodedToken.uid, { content: content.trim() })
+      console.log('Updating comment...')
+      const updatedComment = await updateComment(commentId, content, decodedToken.uid)
+      console.log('Comment updated successfully')
 
-      console.log('Comment updated successfully:', { 
-        commentId,
-        userId: decodedToken.uid
-      })
-      return NextResponse.json({ success: true })
+      return NextResponse.json(updatedComment)
     } catch (error) {
-      console.error('Error updating comment:', error)
-      
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        })
-
-        if (error.message === 'Comment not found') {
-          return NextResponse.json(
-            { error: 'Comment not found' },
-            { status: 404 }
-          )
-        }
-
-        if (error.message === 'Not authorized to update this comment') {
-          return NextResponse.json(
-            { error: 'Not authorized to update this comment' },
-            { status: 403 }
-          )
-        }
-      }
-
+      console.error('Error verifying token:', error)
       return NextResponse.json(
-        { error: 'Failed to update comment' },
-        { status: 500 }
+        { error: 'Invalid authorization token' },
+        { status: 401 }
       )
     }
   } catch (error) {
-    console.error('Error processing request:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in PUT /api/comments/[commentId]:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    console.log('--- Comment update completed ---\n')
   }
 }
 
@@ -155,58 +123,35 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         name: decodedToken.name
       })
 
+      // Check if user is admin
+      const userIsAdmin = await isAdmin(decodedToken.uid)
+      console.log('User admin status:', { isAdmin: userIsAdmin })
+
       // Delete the comment
-      await deleteComment(commentId, decodedToken.uid)
+      console.log('Deleting comment...')
+      const success = await deleteComment(commentId, decodedToken.uid, userIsAdmin)
+      console.log('Comment deletion result:', { success })
 
-      console.log('Comment deleted successfully:', { 
-        commentId,
-        userId: decodedToken.uid
-      })
-      return NextResponse.json({ success: true })
-    } catch (error) {
-      console.error('Error deleting comment:', error)
-      
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        })
-
-        if (error.message === 'Comment not found') {
-          return NextResponse.json(
-            { error: 'Comment not found' },
-            { status: 404 }
-          )
-        }
-
-        if (error.message === 'Not authorized to delete this comment') {
-          return NextResponse.json(
-            { error: 'Not authorized to delete this comment' },
-            { status: 403 }
-          )
-        }
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Not authorized to delete this comment' },
+          { status: 403 }
+        )
       }
 
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      console.error('Error verifying token:', error)
       return NextResponse.json(
-        { error: 'Failed to delete comment' },
-        { status: 500 }
+        { error: 'Invalid authorization token' },
+        { status: 401 }
       )
     }
   } catch (error) {
-    console.error('Error processing request:', error)
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      })
-    }
+    console.error('Error in DELETE /api/comments/[commentId]:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    console.log('--- Comment deletion completed ---\n')
   }
 }
