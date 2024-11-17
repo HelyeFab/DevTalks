@@ -20,9 +20,9 @@ export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
   useEffect(() => {
     // Check if user has already upvoted this post
     const checkUpvoteStatus = async () => {
-      if (user?.id) {
+      if (user?.uid) {
         try {
-          const voted = await hasUserUpvoted(postId, user.id)
+          const voted = await hasUserUpvoted(postId, user.uid)
           setHasVoted(voted)
         } catch (error) {
           console.error('Error checking upvote status:', error)
@@ -36,12 +36,12 @@ export function UpvoteButton({ postId, initialUpvotes }: UpvoteButtonProps) {
   }, [postId, user, loading])
 
   const handleUpvote = async () => {
-    if (!user?.id) return
+    if (!user?.uid) return
     if (hasVoted || isUpvoting) return
 
     try {
       setIsUpvoting(true)
-      await upvotePost(postId, user.id)
+      await upvotePost(postId, user.uid)
       setUpvotes(prev => prev + 1)
       setHasVoted(true)
     } catch (error) {

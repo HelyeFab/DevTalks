@@ -28,6 +28,14 @@ service cloud.firestore {
         data.author.image is string;
     }
 
+    function isValidUpvote() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'postId', 'createdAt']) &&
+        data.userId == request.auth.uid &&
+        data.postId is string &&
+        data.createdAt is string;
+    }
+
     // Blog posts collection
     match /blog_posts/{postId} {
       // Anyone can list and read published posts
@@ -44,31 +52,26 @@ service cloud.firestore {
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']));
     }
 
-    // Comments collection
-    match /comments/{commentId} {
-      // Anyone can read comments
-      allow read: if true;
-      
-      // Only authenticated users can create valid comments
-      allow create: if isAuthenticated() &&
-        isValidComment();
-      
-      // Only comment owner or admin can update/delete
-      allow update, delete: if isCommentOwner() || isAdmin();
-    }
-
     // Post upvotes collection
     match /post_upvotes/{upvoteId} {
       // Allow read if authenticated
       allow read: if isAuthenticated();
       
-      // Allow create if authenticated and data is valid
-      allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+      // Allow create/delete if authenticated and userId matches
+      allow create: if isAuthenticated() && isValidUpvote();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      // Anyone can read comments
+      allow read: if true;
       
-      // Allow delete if user owns the upvote
-      allow delete: if isAuthenticated() &&
-        resource.data.userId == request.auth.uid;
+      // Only authenticated users can create comments
+      allow create: if isAuthenticated() && isValidComment();
+      
+      // Only comment owner can update/delete their comments
+      allow update, delete: if isCommentOwner();
     }
   }
 }

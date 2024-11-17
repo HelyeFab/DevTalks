@@ -94,3 +94,39 @@ service firebase.storage {
     }
   }
 }
+
+
+
+Then, add these environment variables to your .env.local file:
+
+Code
+CopyInsert
+RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
+EMAIL_USER=your_gmail_address
+EMAIL_PASSWORD=your_gmail_app_password
+You'll need to:
+
+Set up reCAPTCHA v3:
+Go to https://www.google.com/recaptcha/admin
+Create a new site
+Choose reCAPTCHA v3
+Add your domain
+Get the site key and secret key
+Set up Gmail:
+Use your Gmail address for EMAIL_USER
+Create an App Password:
+Go to Google Account settings
+Security
+2-Step Verification (enable if not already)
+App passwords
+Create a new app password for "Mail"
+Use this password for EMAIL_PASSWORD
+The contact form includes several anti-spam features:
+
+reCAPTCHA v3 for bot detection
+Rate limiting (5 requests per IP per hour)
+Required fields validation
+Email format validation
+Server-side validation
+Would you like me to help you set up the reCAPTCHA and email configuration?

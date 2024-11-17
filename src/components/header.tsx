@@ -183,20 +183,20 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-dark-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50/80 dark:bg-dark-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700">
         <nav className="container mx-auto px-6 max-w-6xl flex items-center justify-between h-16">
           <Link
             href="/"
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-4 group"
           >
-            <span className="font-display text-4xl font-bold text-pink-600 group-hover:text-pink-700 dark:text-pink-500 dark:hover:text-pink-400 transition-colors drop-shadow-sm">
-              DevTalks
+            <span className="font-lobster text-4xl tracking-wide text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+              iTalkDevs
             </span>
-            <img
-              src="/images/dt-logo-italic.svg"
-              alt="DT"
-              className="h-10 w-10"
-            />
+            <div className="flex items-center justify-center w-10 h-10 bg-pink-600 group-hover:bg-pink-700 dark:bg-pink-500 dark:group-hover:bg-pink-600 rounded-lg transition-colors">
+              <span className="font-lobster text-base tracking-wider text-white">
+                iTD
+              </span>
+            </div>
           </Link>
 
           <div className="flex items-center gap-4 md:hidden">

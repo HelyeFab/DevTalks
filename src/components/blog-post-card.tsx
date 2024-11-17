@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { format } from 'date-fns'
+import { Clock } from 'lucide-react'
 import type { BlogPost } from '@/types/blog'
+import { formatReadTime } from '@/utils/read-time'
 
 export function BlogPostCard({ post }: { post: BlogPost }) {
   return (
@@ -23,6 +25,15 @@ export function BlogPostCard({ post }: { post: BlogPost }) {
             </time>
             <span>•</span>
             <span>{post.author.name}</span>
+            {post.readTime && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {formatReadTime(post.readTime)}
+                </span>
+              </>
+            )}
           </div>
           <h2 className="text-2xl font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {post.title}

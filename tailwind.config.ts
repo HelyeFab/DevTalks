@@ -10,9 +10,12 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-geist)'],
-        mono: ['var(--font-geist-mono)'],
+        sans: ['var(--font-cabin)', 'system-ui', 'sans-serif'],
+        mono: ['monospace'],
+        lobster: ['var(--font-lobster)', 'cursive'],
+        cabin: ['var(--font-cabin)', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'serif'],
+        outfit: ['var(--font-outfit)', 'var(--font-geist)'],
       },
       colors: {
         background: "var(--background)",

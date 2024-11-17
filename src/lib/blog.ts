@@ -14,9 +14,14 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  DocumentData
+  DocumentData,
+  setDoc
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { getAuth } from 'firebase/auth'
+import { calculateReadTime } from '@/utils/read-time'
+
+const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 
 export interface BlogPost {
   id?: string
@@ -31,12 +36,14 @@ export interface BlogPost {
     name: string
     email: string
     image?: string
+    uid?: string
   }
   date: string
   slug: string
   published: boolean
   publishedAt?: string
   upvotes?: number
+  readTime?: number
 }
 
 class BlogError extends Error {
@@ -51,37 +58,82 @@ const UPVOTES_COLLECTION = 'post_upvotes'
 
 // Helper function to convert Firestore data to BlogPost
 function convertPost(id: string, data: DocumentData): BlogPost {
+  // Convert Firestore Timestamp to ISO string
+  const date = data.date instanceof Timestamp 
+    ? data.date.toDate().toISOString() 
+    : data.date || new Date().toISOString()
+
+  const publishedAt = data.publishedAt instanceof Timestamp
+    ? data.publishedAt.toDate().toISOString()
+    : data.publishedAt
+
   return {
     id,
-    title: data.title,
-    subtitle: data.subtitle,
-    content: data.content,
-    excerpt: data.excerpt,
-    image: data.image,
-    imageAlt: data.imageAlt,
+    title: data.title || '',
+    subtitle: data.subtitle || '',
+    content: data.content || '',
+    excerpt: data.excerpt || '',
+    image: data.image || '',
+    imageAlt: data.imageAlt || '',
     tags: data.tags || [],
-    author: data.author,
-    date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
-    slug: data.slug,
-    published: data.published,
-    publishedAt: data.publishedAt instanceof Timestamp ? data.publishedAt.toDate().toISOString() : data.publishedAt,
-    upvotes: data.upvotes || 0
+    author: data.author || {
+      name: '',
+      email: '',
+    },
+    date,
+    slug: data.slug || '',
+    published: data.published || false,
+    publishedAt,
+    upvotes: data.upvotes || 0,
+    readTime: data.readTime || calculateReadTime(data.content || '')
   }
 }
 
 // Server-side functions
 export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> {
   try {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const auth = getAuth()
+    const user = auth.currentUser
+    
+    if (!user) {
+      throw new BlogError('User must be authenticated to create posts')
+    }
+
+    // Check if user has a profile and is admin
+    const profileRef = doc(db, 'profiles', user.uid)
+    const profileSnap = await getDoc(profileRef)
+
+    // Create profile if it doesn't exist and user is admin email
+    if (!profileSnap.exists() && user.email === ADMIN_EMAIL) {
+      await setDoc(profileRef, {
+        isAdmin: true,
+        email: user.email,
+        name: user.displayName || '',
+        photoURL: user.photoURL || '',
+        createdAt: new Date().toISOString()
+      })
+    } else if (!profileSnap.exists() || !profileSnap.data()?.isAdmin) {
+      throw new BlogError('User must be an admin to create posts')
+    }
+
+    const postData = {
       ...post,
       date: post.date || new Date().toISOString(),
       upvotes: 0,
-    })
+      readTime: calculateReadTime(post.content),
+      author: {
+        uid: user.uid,
+        name: user.displayName || '',
+        email: user.email || '',
+        image: user.photoURL || ''
+      }
+    }
+
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), postData)
 
     return {
       id: docRef.id,
-      ...post,
-      upvotes: 0,
+      ...postData
     }
   } catch (error) {
     console.error('Error creating post:', error)
@@ -235,8 +287,8 @@ export async function upvotePost(postId: string, userId: string): Promise<void> 
         throw new Error('Post not found')
       }
 
-      // Get or create the upvote document
-      const upvoteRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
+      // Get or create the upvote document in the subcollection
+      const upvoteRef = doc(db, `${COLLECTION_NAME}/${postId}/upvotes`, userId)
       const upvoteDoc = await transaction.get(upvoteRef)
 
       if (upvoteDoc.exists()) {
@@ -249,7 +301,6 @@ export async function upvotePost(postId: string, userId: string): Promise<void> 
         // User hasn't upvoted yet, add the upvote
         transaction.set(upvoteRef, {
           userId,
-          postId,
           createdAt: new Date().toISOString()
         })
         transaction.update(postRef, {
@@ -270,7 +321,7 @@ export async function hasUserUpvoted(postId: string, userId: string | null): Pro
   if (!userId) return false
 
   try {
-    const docRef = doc(db, UPVOTES_COLLECTION, `${postId}_${userId}`)
+    const docRef = doc(db, `${COLLECTION_NAME}/${postId}/upvotes`, userId)
     const docSnap = await getDoc(docRef)
     return docSnap.exists()
   } catch (error) {
