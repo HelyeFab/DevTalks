@@ -23,9 +23,9 @@ export function Footer() {
   return (
     <footer className="mt-auto py-8 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            © {new Date().getFullYear()} Emmanuel Fabiani. All rights reserved.
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+            {new Date().getFullYear()} Emmanuel Fabiani. All rights reserved.
           </p>
           
           <div className="flex items-center gap-4">

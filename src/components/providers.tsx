@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -30,7 +32,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+      </div>
     </ThemeProvider>
   )
 }

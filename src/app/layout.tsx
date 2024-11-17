@@ -3,6 +3,7 @@ import { Lobster, Cabin } from 'next/font/google'
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from '@/contexts/auth-context'
+import { AdminProvider } from '@/contexts/admin-context'
 import { FloatingSearchButton } from '@/components/search/floating-search-button'
 import { Toaster } from 'sonner'
 
@@ -22,8 +23,8 @@ export const metadata: Metadata = {
     default: 'iTalkDevs',
     template: '%s | iTalkDevs'
   },
-  description: 'A blog about software development, technology, and everything in between.',
-};
+  description: 'A blog about software development and tech.',
+}
 
 export default function RootLayout({
   children,
@@ -37,15 +38,15 @@ export default function RootLayout({
         className={`${cabin.variable} ${lobster.variable} font-cabin m-0 antialiased min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-50`}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          <Providers>
-            <main className="flex min-h-screen flex-col">
+        <Providers>
+          <AuthProvider>
+            <AdminProvider>
               {children}
-            </main>
-            <FloatingSearchButton />
-            <Toaster richColors position="bottom-right" />
-          </Providers>
-        </AuthProvider>
+              <FloatingSearchButton />
+              <Toaster richColors position="bottom-right" />
+            </AdminProvider>
+          </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

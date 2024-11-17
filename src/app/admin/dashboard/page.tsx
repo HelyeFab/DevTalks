@@ -61,7 +61,7 @@ export default function AdminDashboard() {
       title: 'Announcements',
       description: 'Manage site announcements',
       icon: Bell,
-      href: '/admin/announcements',
+      href: '/manage/announcements',
       color: 'text-purple-600 dark:text-purple-400',
       bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     },

@@ -90,7 +90,7 @@ export function CommentSection({ postId }: Props) {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments/${parentId}/new-replies`, {
+      const response = await fetch(`/api/posts/${postId}/comments/${parentId}/replies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,11 +144,17 @@ export function CommentSection({ postId }: Props) {
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
 
-      const updatedComment = await response.json()
-      setComments(prev => prev.map(comment => 
-        comment.id === commentId ? updatedComment : comment
-      ))
-      toast.success('Comment updated successfully')
+      const { success } = await response.json()
+      if (success) {
+        setComments(prev => prev.map(comment => 
+          comment.id === commentId ? {
+            ...comment,
+            content,
+            updatedAt: new Date().toISOString()
+          } : comment
+        ))
+        toast.success('Comment updated successfully')
+      }
     } catch (error) {
       console.error('Error editing comment:', error instanceof Error ? error.message : 'Unknown error')
       toast.error('Failed to edit comment. Please try again.')
@@ -172,8 +178,11 @@ export function CommentSection({ postId }: Props) {
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
 
-      setComments(prev => prev.filter(comment => comment.id !== commentId))
-      toast.success('Comment deleted successfully')
+      const { success } = await response.json()
+      if (success) {
+        setComments(prev => prev.filter(comment => comment.id !== commentId))
+        toast.success('Comment deleted successfully')
+      }
     } catch (error) {
       console.error('Error deleting comment:', error instanceof Error ? error.message : 'Unknown error')
       toast.error('Failed to delete comment. Please try again.')
