@@ -58,20 +58,20 @@ export default function AdminDashboard() {
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     },
     {
-      title: 'Announcements',
-      description: 'Manage site announcements',
-      icon: Bell,
-      href: '/manage/announcements',
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    },
-    {
       title: 'Images',
       description: 'Manage uploaded images',
       icon: ImageIcon,
       href: '/admin/images',
       color: 'text-pink-600 dark:text-pink-400',
       bgColor: 'bg-pink-50 dark:bg-pink-900/20',
+    },
+    {
+      title: 'Announcements',
+      description: 'Manage site announcements',
+      icon: Bell,
+      href: '/admin/announcements',
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     },
     {
       title: 'Analytics',

@@ -9,15 +9,15 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { updateProfile } from 'firebase/auth'
 import { db } from '@/lib/firebase'
 import Image from 'next/image'
-import { Twitter, Github, Linkedin, Link as LinkIcon, Camera, Edit2 } from 'lucide-react'
+import { X, Github, Linkedin, Link as LinkIcon, Camera, Edit2 } from 'lucide-react'
 import type { UserProfile } from '@/types/profile'
 
 const DEFAULT_AVATAR = '/images/default-avatar.svg'
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 
 interface SocialLink {
-  name: 'twitter' | 'github' | 'linkedin'
-  icon: typeof Twitter | typeof Github | typeof Linkedin
+  name: 'x' | 'github' | 'linkedin'
+  icon: typeof X | typeof Github | typeof Linkedin
   label: string
   placeholder: string
   baseUrl: string
@@ -25,11 +25,11 @@ interface SocialLink {
 
 const socialLinks: SocialLink[] = [
   {
-    name: 'twitter',
-    icon: Twitter,
-    label: 'Twitter',
+    name: 'x',
+    icon: X,
+    label: 'X',
     placeholder: 'username',
-    baseUrl: 'https://twitter.com/'
+    baseUrl: 'https://x.com/'
   },
   {
     name: 'github',

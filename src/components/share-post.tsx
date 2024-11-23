@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Share2, Link2, Twitter, Facebook, Linkedin, MessageCircle } from 'lucide-react'
+import { Share2, Link2, X, Facebook, Linkedin, MessageCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SharePostProps {
@@ -39,10 +39,10 @@ export function SharePost({ title, url }: SharePostProps) {
       }
     },
     {
-      name: 'Twitter',
-      Icon: Twitter,
+      name: 'X',
+      Icon: X,
       onClick: () => {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank')
+        window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank')
         setIsOpen(false)
       }
     },
@@ -50,7 +50,11 @@ export function SharePost({ title, url }: SharePostProps) {
       name: 'Facebook',
       Icon: Facebook,
       onClick: () => {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
+        window.open(
+          `https://www.facebook.com/dialog/share?href=${encodeURIComponent(url)}&display=popup`,
+          '_blank',
+          'width=626,height=436'
+        )
         setIsOpen(false)
       }
     },

@@ -20,6 +20,7 @@ import {
 import { db } from './firebase'
 import { getAuth } from 'firebase/auth'
 import { calculateReadTime } from '@/utils/read-time'
+import type { BlogPost, Author } from '@/types/blog'
 
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 
@@ -32,12 +33,7 @@ export interface BlogPost {
   image?: string
   imageAlt?: string
   tags: string[]
-  author: {
-    name: string
-    email: string
-    image?: string
-    uid?: string
-  }
+  author: Author
   date: string
   slug: string
   published: boolean
@@ -58,40 +54,56 @@ const UPVOTES_COLLECTION = 'post_upvotes'
 
 // Helper function to convert Firestore data to BlogPost
 function convertPost(id: string, data: DocumentData): BlogPost {
-  // Convert Firestore Timestamp to ISO string
+  // Ensure all date fields are converted to ISO strings
   const date = data.date instanceof Timestamp 
     ? data.date.toDate().toISOString() 
-    : data.date || new Date().toISOString()
+    : typeof data.date === 'string'
+      ? data.date
+      : new Date().toISOString()
 
   const publishedAt = data.publishedAt instanceof Timestamp
     ? data.publishedAt.toDate().toISOString()
-    : data.publishedAt
+    : typeof data.publishedAt === 'string'
+      ? data.publishedAt
+      : undefined
 
-  return {
-    id,
-    title: data.title || '',
-    subtitle: data.subtitle || '',
-    content: data.content || '',
-    excerpt: data.excerpt || '',
-    image: data.image || '',
-    imageAlt: data.imageAlt || '',
-    tags: data.tags || [],
-    author: data.author || {
-      name: '',
-      email: '',
-    },
-    date,
-    slug: data.slug || '',
-    published: data.published || false,
-    publishedAt,
-    upvotes: data.upvotes || 0,
-    readTime: data.readTime || calculateReadTime(data.content || '')
+  // Ensure author object is properly structured
+  const author: Author = {
+    name: data.author?.name || '',
+    email: data.author?.email || '',
+    image: data.author?.image || undefined,
+    uid: data.author?.uid || undefined,
   }
+
+  // Convert and sanitize the post data
+  const post: BlogPost = {
+    id,
+    title: String(data.title || ''),
+    subtitle: String(data.subtitle || ''),
+    content: String(data.content || ''),
+    excerpt: data.excerpt ? String(data.excerpt) : undefined,
+    image: data.image ? String(data.image) : undefined,
+    imageAlt: data.imageAlt ? String(data.imageAlt) : undefined,
+    tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+    author,
+    date,
+    slug: String(data.slug || ''),
+    published: Boolean(data.published),
+    publishedAt,
+    upvotes: typeof data.upvotes === 'number' ? data.upvotes : 0,
+    readTime: typeof data.readTime === 'number' ? data.readTime : calculateReadTime(String(data.content || ''))
+  }
+
+  return post
 }
 
 // Server-side functions
 export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     const auth = getAuth()
     const user = auth.currentUser
     
@@ -146,6 +158,10 @@ export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> 
 
 export async function updatePost(post: BlogPost): Promise<BlogPost> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     if (!post.id) {
       throw new Error('Post ID is required')
     }
@@ -168,6 +184,10 @@ export async function updatePost(post: BlogPost): Promise<BlogPost> {
 
 export async function deletePost(id: string): Promise<void> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     const docRef = doc(db, COLLECTION_NAME, id)
     await deleteDoc(docRef)
   } catch (error) {
@@ -181,6 +201,10 @@ export async function deletePost(id: string): Promise<void> {
 
 export async function getPost(id: string): Promise<BlogPost | null> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     const docRef = doc(db, COLLECTION_NAME, id)
     const docSnap = await getDoc(docRef)
 
@@ -200,18 +224,14 @@ export async function getPost(id: string): Promise<BlogPost | null> {
 
 export async function getAllPosts(publishedOnly = true): Promise<BlogPost[]> {
   try {
-    let q = query(
-      collection(db, COLLECTION_NAME),
-      orderBy('date', 'desc')
-    )
-
-    if (publishedOnly) {
-      q = query(
-        q,
-        where('published', '==', true)
-      )
+    if (!db) {
+      throw new Error('Firestore is not initialized')
     }
 
+    const postsRef = collection(db, COLLECTION_NAME)
+    const constraints = publishedOnly ? [where('published', '==', true)] : []
+    const q = query(postsRef, ...constraints, orderBy('date', 'desc'))
+    
     const querySnapshot = await getDocs(q)
     return querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()))
   } catch (error) {
@@ -225,6 +245,10 @@ export async function getAllPosts(publishedOnly = true): Promise<BlogPost[]> {
 
 export async function getPostBySlug(slug: string, includeDrafts = false): Promise<BlogPost | null> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     let q = query(
       collection(db, COLLECTION_NAME),
       where('slug', '==', slug),
@@ -257,6 +281,10 @@ export async function getPostBySlug(slug: string, includeDrafts = false): Promis
 
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     const q = query(
       collection(db, COLLECTION_NAME),
       where('tags', 'array-contains', tag),
@@ -278,36 +306,22 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
 // Client-side only functions
 export async function upvotePost(postId: string, userId: string): Promise<void> {
   try {
-    await runTransaction(db, async (transaction) => {
-      // Get the post document
-      const postRef = doc(db, COLLECTION_NAME, postId)
-      const postDoc = await transaction.get(postRef)
+    const idToken = await getAuth().currentUser?.getIdToken()
+    if (!idToken) {
+      throw new Error('User not authenticated')
+    }
 
-      if (!postDoc.exists()) {
-        throw new Error('Post not found')
-      }
-
-      // Get or create the upvote document in the subcollection
-      const upvoteRef = doc(db, `${COLLECTION_NAME}/${postId}/upvotes`, userId)
-      const upvoteDoc = await transaction.get(upvoteRef)
-
-      if (upvoteDoc.exists()) {
-        // User has already upvoted, remove the upvote
-        transaction.delete(upvoteRef)
-        transaction.update(postRef, {
-          upvotes: increment(-1)
-        })
-      } else {
-        // User hasn't upvoted yet, add the upvote
-        transaction.set(upvoteRef, {
-          userId,
-          createdAt: new Date().toISOString()
-        })
-        transaction.update(postRef, {
-          upvotes: increment(1)
-        })
+    const response = await fetch(`/api/posts/${postId}/upvote`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`
       }
     })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to upvote post')
+    }
   } catch (error) {
     console.error('Error upvoting post:', error)
     throw new BlogError(
@@ -321,6 +335,10 @@ export async function hasUserUpvoted(postId: string, userId: string | null): Pro
   if (!userId) return false
 
   try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
     const docRef = doc(db, `${COLLECTION_NAME}/${postId}/upvotes`, userId)
     const docSnap = await getDoc(docRef)
     return docSnap.exists()

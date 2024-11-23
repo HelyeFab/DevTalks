@@ -1,18 +1,24 @@
 export interface Author {
   name: string
-  image: string
+  email: string
+  image?: string
+  uid?: string
 }
 
-export type BlogPost = {
+export interface BlogPost {
   id: string
   title: string
-  slug: string
-  date: string
+  subtitle: string
   content: string
-  excerpt: string
-  published: boolean
+  excerpt?: string
   image?: string
-  author: Author
+  imageAlt?: string
   tags: string[]
-  upvotes: number
+  author: Author
+  date: string
+  slug: string
+  published: boolean
+  publishedAt?: string
+  upvotes?: number
+  readTime?: number
 }

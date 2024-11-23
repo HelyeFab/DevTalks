@@ -40,12 +40,6 @@ service cloud.firestore {
       }
     }
 
-    // Announcements collection
-    match /announcements/{announcementId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // Environment variables
     match /env/{docId} {
       allow read: if true;

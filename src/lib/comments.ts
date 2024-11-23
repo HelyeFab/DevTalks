@@ -1,8 +1,10 @@
 import type { Comment, CreateCommentData, UpdateCommentData } from '@/types/comment'
-import { db } from './firebase-admin'
+import { initAdmin } from './firebase-admin'
 
 const POSTS_COLLECTION = 'blog_posts'
 const COMMENTS_COLLECTION = 'comments'
+
+const { db } = initAdmin()
 
 export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
   console.log('Getting comments for post:', postId)

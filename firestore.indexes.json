@@ -1,15 +1,33 @@
 {
   "indexes": [
     {
+      "collectionGroup": "blog_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "published",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "publishedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "announcements",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "active",
+          "fieldPath": "published",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "date",
+          "fieldPath": "pinned",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "startDate",
           "order": "DESCENDING"
         }
       ]

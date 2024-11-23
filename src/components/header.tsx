@@ -104,10 +104,8 @@ export function Header() {
   const renderUserMenu = () => {
     if (!user) return null
 
-    console.log('Rendering user menu:', { isAdmin, userEmail: user.email })
-
     return (
-      <div className="relative" ref={userMenuRef}>
+      <div className="relative inline-block text-left" ref={userMenuRef}>
         <button
           onClick={() => setShowUserMenu(!showUserMenu)}
           className="flex items-center gap-2 group"
@@ -120,9 +118,9 @@ export function Header() {
         </button>
 
         {showUserMenu && (
-          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg py-1 z-[100] ring-1 ring-black ring-opacity-5">
             <Link
-              href="/profile"
+              href="/user/profile"
               className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
               onClick={() => setShowUserMenu(false)}
             >
@@ -230,6 +228,7 @@ export function Header() {
             ))}
 
             <div className="h-6 w-px bg-gray-200 dark:bg-dark-700" />
+
             {renderAuthLinks()}
             <ThemeToggle />
           </div>
@@ -253,50 +252,56 @@ export function Header() {
                       {item.name}
                     </Link>
                   ))}
-                  <div className="h-px bg-gray-200 dark:bg-dark-700" />
-                  {!loading && (
+                  
+                  {user && (
                     <>
-                      {user ? (
-                        <>
-                          <div className="flex items-center gap-2 py-2">
-                            {renderUserAvatar()}
-                            <span className="text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</span>
-                          </div>
-                          {isAdmin && (
-                            <Link
-                              href="/admin/dashboard"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                            >
-                              Admin Dashboard
-                            </Link>
-                          )}
-                          <button
-                            onClick={handleSignOut}
-                            className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                          >
-                            Sign Out
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href="/auth/signin"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="text-lg py-2 flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                          >
-                            <LogIn className="h-5 w-5" />
-                            <span>Sign In</span>
-                          </Link>
-                          <Link
-                            href="/auth/signup"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                          >
-                            Sign Up
-                          </Link>
-                        </>
+                      <div className="h-px bg-gray-200 dark:bg-dark-700" />
+                      <div className="flex items-center gap-2 py-2">
+                        {renderUserAvatar()}
+                        <span className="text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</span>
+                      </div>
+                      <Link
+                        href="/user/profile"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                      >
+                        Profile
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        >
+                          Admin Dashboard
+                        </Link>
                       )}
+                      <button
+                        onClick={handleSignOut}
+                        className="text-left text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  )}
+                  
+                  {!user && (
+                    <>
+                      <div className="h-px bg-gray-200 dark:bg-dark-700" />
+                      <Link
+                        href="/auth/signin"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/auth/signup"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                      >
+                        Sign Up
+                      </Link>
                     </>
                   )}
                 </div>

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth, db } from '@/lib/firebase'
+import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 import { BlogPost } from '@/types/blog'
+import { initAdmin } from '@/lib/firebase-admin'
 
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
+
+// Initialize Firebase Admin
+const { auth, db } = initAdmin()
 
 // Helper function to check if user is admin
 async function isAdmin(req: NextRequest) {
@@ -42,9 +47,9 @@ export async function POST(req: NextRequest) {
     })
 
     // Create post
-    const postRef = db.collection('blog').doc()
-    await postRef.set(data)
-    const post = { id: postRef.id, ...data }
+    const postRef = db.collection('blog')
+    const docRef = await postRef.add(data)
+    const post = { id: docRef.id, ...data }
     console.log('Post created:', { id: post.id })
 
     return NextResponse.json(post)
@@ -58,8 +63,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  console.log('Handling PUT request to /api/blog')
-
   try {
     // Check admin status
     if (!await isAdmin(req)) {
@@ -71,19 +74,19 @@ export async function PUT(req: NextRequest) {
     }
 
     // Parse request body
-    const data = await req.json() as BlogPost
-    console.log('Updating post:', {
-      id: data.id,
-      title: data.title,
-    })
+    const { id, ...data } = await req.json() as BlogPost & { id: string }
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Post ID is required' },
+        { status: 400 }
+      )
+    }
 
     // Update post
-    const postRef = db.collection('blog').doc(data.id)
+    const postRef = db.collection('blog').doc(id)
     await postRef.update(data)
-    const post = { id: data.id, ...data }
-    console.log('Post updated:', { id: post.id })
 
-    return NextResponse.json(post)
+    return NextResponse.json({ id, ...data })
   } catch (error) {
     console.error('Error updating post:', error)
     return NextResponse.json(
@@ -94,8 +97,6 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  console.log('Handling DELETE request to /api/blog')
-
   try {
     // Check admin status
     if (!await isAdmin(req)) {
@@ -107,14 +108,18 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Parse request body
-    const data = await req.json() as { id: string }
-    console.log('Deleting post:', { id: data.id })
+    const { id } = await req.json() as { id: string }
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Post ID is required' },
+        { status: 400 }
+      )
+    }
 
     // Delete post
-    await db.collection('blog').doc(data.id).delete()
-    console.log('Post deleted:', { id: data.id })
+    await db.collection('blog').doc(id).delete()
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ id })
   } catch (error) {
     console.error('Error deleting post:', error)
     return NextResponse.json(

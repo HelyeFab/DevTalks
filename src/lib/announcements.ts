@@ -3,158 +3,215 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  FirestoreError,
   addDoc,
   updateDoc,
   deleteDoc,
-  query,
-  orderBy,
-  QueryConstraint,
-  where,
-  limit as limitQuery,
-  Timestamp,
+  DocumentData,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { getAuth } from 'firebase/auth'
-
-export type AnnouncementType = 'info' | 'update' | 'maintenance'
 
 export interface Announcement {
   id?: string
   title: string
   content: string
-  type: AnnouncementType
-  date: string
-  active: boolean
-  authorId: string
-  authorName: string
+  pinned: boolean
+  startDate?: string
+  endDate?: string
+  published: boolean
+  publishedAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
-const COLLECTION_NAME = 'announcements'
-
-async function checkAdminAccess() {
-  const auth = getAuth()
-  const user = auth.currentUser
-
-  if (!user) {
-    throw new Error('Authentication required')
+class AnnouncementError extends Error {
+  constructor(message: string, public originalError?: FirestoreError) {
+    super(message)
+    this.name = 'AnnouncementError'
   }
-
-  const profileRef = doc(db, 'profiles', user.uid)
-  const profileSnap = await getDoc(profileRef)
-
-  if (!profileSnap.exists()) {
-    throw new Error('Profile not found')
-  }
-
-  const profile = profileSnap.data()
-  if (!profile?.isAdmin) {
-    throw new Error('Admin access required')
-  }
-
-  return user
 }
 
-export async function createAnnouncement(announcement: Omit<Announcement, 'id' | 'date'>): Promise<Announcement> {
+// Helper function to convert Firestore data to Announcement
+const convertAnnouncement = (id: string, data: DocumentData): Announcement => {
+  return {
+    id,
+    title: data.title,
+    content: data.content,
+    pinned: data.pinned,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    published: data.published,
+    publishedAt: data.publishedAt || null,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  }
+}
+
+// Create a new announcement
+export const createAnnouncement = async (announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>): Promise<Announcement> => {
   try {
-    const user = await checkAdminAccess()
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const now = new Date().toISOString()
+    // Remove undefined values and convert them to null for Firestore
+    const announcementData = {
       ...announcement,
-      date: new Date().toISOString(),
-      authorId: user.uid,
-      authorName: user.displayName || 'Admin'
-    })
+      startDate: announcement.startDate || null,
+      endDate: announcement.endDate || null,
+      publishedAt: announcement.published ? now : null,
+      createdAt: now,
+      updatedAt: now,
+    }
 
+    const docRef = await addDoc(collection(db, 'announcements'), announcementData)
     return {
       id: docRef.id,
-      ...announcement,
-      date: new Date().toISOString(),
-      authorId: user.uid,
-      authorName: user.displayName || 'Admin'
+      ...announcementData,
     }
   } catch (error) {
     console.error('Error creating announcement:', error)
-    throw new Error(error instanceof Error ? error.message : 'Failed to create announcement')
+    throw new AnnouncementError('Failed to create announcement', error as FirestoreError)
   }
 }
 
-export async function updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
+// Update an existing announcement
+export const updateAnnouncement = async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
   try {
-    await checkAdminAccess()
-    const docRef = doc(db, COLLECTION_NAME, id)
-    await updateDoc(docRef, data)
+    const announcementRef = doc(db, 'announcements', id)
+    const now = new Date().toISOString()
+    
+    // Convert undefined values to null for Firestore
+    const updatedData = {
+      ...updates,
+      startDate: updates.startDate || null,
+      endDate: updates.endDate || null,
+      updatedAt: now,
+      // Set publishedAt when publishing for the first time
+      ...(updates.published !== undefined && {
+        publishedAt: updates.published ? now : null,
+      }),
+    }
+
+    await updateDoc(announcementRef, updatedData)
+
+    const updatedDoc = await getDoc(announcementRef)
+    if (!updatedDoc.exists()) {
+      throw new AnnouncementError('Announcement not found')
+    }
+
+    return convertAnnouncement(id, updatedDoc.data())
   } catch (error) {
     console.error('Error updating announcement:', error)
-    throw new Error(error instanceof Error ? error.message : 'Failed to update announcement')
+    throw new AnnouncementError('Failed to update announcement', error as FirestoreError)
   }
 }
 
-export async function deleteAnnouncement(id: string): Promise<void> {
+// Delete an announcement
+export const deleteAnnouncement = async (id: string): Promise<void> => {
   try {
-    await checkAdminAccess()
-    const docRef = doc(db, COLLECTION_NAME, id)
-    await deleteDoc(docRef)
+    await deleteDoc(doc(db, 'announcements', id))
   } catch (error) {
     console.error('Error deleting announcement:', error)
-    throw new Error(error instanceof Error ? error.message : 'Failed to delete announcement')
+    throw new AnnouncementError('Failed to delete announcement', error as FirestoreError)
   }
 }
 
-export async function getAnnouncement(id: string): Promise<Announcement | null> {
+// Get a single announcement by ID
+export const getAnnouncement = async (id: string): Promise<Announcement | null> => {
   try {
-    const docRef = doc(db, COLLECTION_NAME, id)
+    const docRef = doc(db, 'announcements', id)
     const docSnap = await getDoc(docRef)
 
     if (!docSnap.exists()) {
       return null
     }
 
-    return {
-      id: docSnap.id,
-      ...docSnap.data(),
-    } as Announcement
+    return convertAnnouncement(docSnap.id, docSnap.data())
   } catch (error) {
     console.error('Error getting announcement:', error)
-    throw new Error('Failed to get announcement')
+    throw new AnnouncementError('Failed to get announcement', error as FirestoreError)
   }
 }
 
-export async function getActiveAnnouncements(maxLimit = 3): Promise<Announcement[]> {
+// Get all announcements
+export const getAllAnnouncements = async (publishedOnly = true): Promise<Announcement[]> => {
   try {
-    const constraints: QueryConstraint[] = [
-      where('active', '==', true),
-      orderBy('date', 'desc'),
-      limitQuery(maxLimit)
-    ]
+    let q = query(collection(db, 'announcements'))
 
-    const q = query(collection(db, COLLECTION_NAME), ...constraints)
+    if (publishedOnly) {
+      q = query(q, where('published', '==', true))
+    }
+
     const querySnapshot = await getDocs(q)
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Announcement[]
+    return querySnapshot.docs.map(doc => convertAnnouncement(doc.id, doc.data()))
   } catch (error) {
     console.error('Error getting announcements:', error)
-    throw new Error('Failed to get announcements')
+    throw new AnnouncementError('Failed to get announcements', error as FirestoreError)
   }
 }
 
-export async function getAllAnnouncements(): Promise<Announcement[]> {
+// Get active announcements (current date falls between startDate and endDate)
+export const getActiveAnnouncements = async (): Promise<Announcement[]> => {
   try {
-    await checkAdminAccess()
-    const constraints: QueryConstraint[] = [
-      orderBy('date', 'desc')
-    ]
-
-    const q = query(collection(db, COLLECTION_NAME), ...constraints)
-    const querySnapshot = await getDocs(q)
+    const now = new Date().toISOString()
+    console.log('Current date:', now)
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Announcement[]
+    // Query for published announcements
+    const q = query(
+      collection(db, 'announcements'),
+      where('published', '==', true),
+      orderBy('pinned', 'desc'),
+      orderBy('startDate', 'desc')
+    )
+
+    const querySnapshot = await getDocs(q)
+    const announcements = querySnapshot.docs.map(doc => convertAnnouncement(doc.id, doc.data()))
+    console.log('All announcements from Firestore:', announcements.map(a => ({
+      id: a.id,
+      title: a.title,
+      published: a.published,
+      startDate: a.startDate,
+      endDate: a.endDate,
+      pinned: a.pinned
+    })))
+
+    // Filter active announcements in memory
+    const activeAnnouncements = announcements.filter(announcement => {
+      const startDate = announcement.startDate ? new Date(announcement.startDate) : null
+      const endDate = announcement.endDate ? new Date(announcement.endDate) : null
+      const currentDate = new Date(now)
+
+      const isActive = (!startDate || startDate <= currentDate) && (!endDate || endDate >= currentDate)
+
+      console.log('Checking announcement:', {
+        id: announcement.id,
+        title: announcement.title,
+        published: announcement.published,
+        startDate: startDate?.toISOString() || 'none',
+        endDate: endDate?.toISOString() || 'none',
+        currentDate: currentDate.toISOString(),
+        isActive,
+        reason: !isActive ? (
+          startDate && startDate > currentDate ? 'Start date is in the future' :
+          endDate && endDate < currentDate ? 'End date has passed' :
+          'Unknown reason'
+        ) : 'Active'
+      })
+
+      return isActive
+    })
+
+    console.log('Final active announcements:', activeAnnouncements.map(a => ({
+      id: a.id,
+      title: a.title,
+      pinned: a.pinned
+    })))
+    
+    return activeAnnouncements
   } catch (error) {
-    console.error('Error getting all announcements:', error)
-    throw new Error(error instanceof Error ? error.message : 'Failed to get all announcements')
+    console.error('Error getting active announcements:', error)
+    throw new AnnouncementError('Failed to get active announcements', error as FirestoreError)
   }
 }

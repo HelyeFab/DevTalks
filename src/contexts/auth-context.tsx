@@ -10,7 +10,7 @@ import {
   signOut as firebaseSignOut
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { db, auth as firebaseAuth } from '@/lib/firebase'
 
 interface AuthContextType {
   user: User | null
@@ -32,10 +32,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const auth = getAuth()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!firebaseAuth || !db) {
+      console.error('Firebase auth or Firestore not initialized')
+      setLoading(false)
+      return
+    }
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       try {
         if (user) {
           // Get admin email from environment collection
@@ -76,47 +81,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => unsubscribe()
-  }, [auth])
+  }, [])
 
   const signInWithGoogle = async () => {
-    try {
-      const provider = new GoogleAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      
-      // Get admin email from environment collection
-      const envRef = doc(db, 'env', 'admin')
-      const envSnap = await getDoc(envRef)
-      const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
-
-      // Check if user is admin
-      const isUserAdmin = result.user.email === adminEmail
-      
-      // Create or update user profile
-      const profileRef = doc(db, 'profiles', result.user.uid)
-      const profileSnap = await getDoc(profileRef)
-      
-      if (!profileSnap.exists()) {
-        await setDoc(profileRef, {
-          email: result.user.email,
-          name: result.user.displayName,
-          photoURL: result.user.photoURL,
-          isAdmin: isUserAdmin,
-          createdAt: new Date().toISOString()
-        })
-      }
-    } catch (error) {
-      console.error('Error signing in with Google:', error)
-      throw error
+    if (!firebaseAuth || !db) {
+      throw new Error('Firebase auth or Firestore not initialized')
     }
+
+    const provider = new GoogleAuthProvider()
+    const result = await signInWithPopup(firebaseAuth, provider)
+    
+    // Get admin email from environment collection
+    const envRef = doc(db, 'env', 'admin')
+    const envSnap = await getDoc(envRef)
+    const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
+
+    // Check if user is admin
+    const isUserAdmin = result.user.email === adminEmail
+    
+    // Create or update user profile
+    const profileRef = doc(db, 'profiles', result.user.uid)
+    await setDoc(profileRef, {
+      email: result.user.email,
+      name: result.user.displayName,
+      photoURL: result.user.photoURL,
+      isAdmin: isUserAdmin,
+      createdAt: new Date().toISOString()
+    })
+
+    setIsAdmin(isUserAdmin)
   }
 
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth)
-    } catch (error) {
-      console.error('Error signing out:', error)
-      throw error
+    if (!firebaseAuth) {
+      throw new Error('Firebase auth not initialized')
     }
+
+    await firebaseSignOut(firebaseAuth)
+    setUser(null)
+    setIsAdmin(false)
   }
 
   return (
@@ -127,9 +130,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+  return useContext(AuthContext)
 }

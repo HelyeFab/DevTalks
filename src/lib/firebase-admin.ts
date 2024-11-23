@@ -19,14 +19,14 @@ const serviceAccount = {
   privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
 }
 
-console.log('Initializing Firebase Admin with project:', serviceAccount.projectId)
-
 function getFirebaseAdminApp() {
   if (getApps().length === 0) {
     console.log('No Firebase Admin apps found, initializing...')
     try {
       const app = initializeApp({
         credential: cert(serviceAccount),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
       })
       console.log('Firebase Admin app initialized successfully')
       return app
@@ -39,12 +39,13 @@ function getFirebaseAdminApp() {
   return getApps()[0]
 }
 
-// Initialize Firebase Admin
-const app = getFirebaseAdminApp()
+export function initAdmin() {
+  const app = getFirebaseAdminApp()
+  const auth = getAuth(app)
+  const db = getFirestore(app)
+  console.log('Firebase Admin services initialized successfully')
+  return { app, auth, db }
+}
 
-// Initialize Firestore
-const db = getFirestore(app)
-console.log('Firestore Admin initialized successfully')
-
-// Export instances
-export { getAuth, db }
+// Export auth and db for direct use
+export { getAuth, getFirestore }

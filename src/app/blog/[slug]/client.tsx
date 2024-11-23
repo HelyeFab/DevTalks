@@ -100,7 +100,7 @@ export default function BlogPostClient({ post }: Props) {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
+          Back to Blog Posts
         </Link>
       </div>
 

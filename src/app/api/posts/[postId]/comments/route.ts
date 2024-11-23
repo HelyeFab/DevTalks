@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCommentsByPostId, createComment } from '@/lib/comments'
 import { CreateCommentData } from '@/types/comment'
-import { getAuth } from '@/lib/firebase-admin'
-import { getFirestore } from 'firebase-admin/firestore'
+import { initAdmin } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
 const DEFAULT_AVATAR = '/images/default-avatar.svg'
+const { auth } = initAdmin()
 
 type RouteContext = {
   params: { postId: string }
@@ -51,11 +51,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     console.log('Token to verify:', token.substring(0, 20) + '...')
     
     try {
-      // Get Firebase Admin auth instance
-      console.log('Getting Firebase Admin auth instance...')
-      const auth = getAuth()
-      console.log('Got Firebase Admin auth instance')
-
       // Verify the token
       console.log('Verifying token...')
       const decodedToken = await auth.verifyIdToken(token)
