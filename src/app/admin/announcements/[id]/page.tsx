@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
@@ -14,6 +14,7 @@ export default function EditAnnouncement({ params }: { params: { id: string } })
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const id = use(params).id
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -24,7 +25,7 @@ export default function EditAnnouncement({ params }: { params: { id: string } })
 
     async function fetchAnnouncement() {
       try {
-        const fetchedAnnouncement = await getAnnouncement(params.id)
+        const fetchedAnnouncement = await getAnnouncement(id)
         if (!fetchedAnnouncement) {
           setError('Announcement not found')
           return
@@ -41,7 +42,7 @@ export default function EditAnnouncement({ params }: { params: { id: string } })
     if (user && isAdmin) {
       fetchAnnouncement()
     }
-  }, [user, loading, isAdmin, router, params.id])
+  }, [user, loading, isAdmin, router, id])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
