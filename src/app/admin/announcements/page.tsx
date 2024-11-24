@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/auth-context'
 import { PenSquare, Trash2, Eye } from 'lucide-react'
 import { getAllAnnouncements, deleteAnnouncement, updateAnnouncement, type Announcement } from '@/lib/announcements'
 import { format } from 'date-fns'
+import { ConfirmationModal } from '@/components/ui/confirmation-modal'
+import { toast } from 'sonner'
 
 export default function AnnouncementsList() {
   const { user, loading, isAdmin } = useAuth()
@@ -14,6 +16,7 @@ export default function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -43,16 +46,21 @@ export default function AnnouncementsList() {
   }, [user, isAdmin])
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this announcement?')) {
-      return
-    }
+    setAnnouncementToDelete(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!announcementToDelete) return
 
     try {
-      await deleteAnnouncement(id)
-      setAnnouncements(announcements.filter(announcement => announcement.id !== id))
+      await deleteAnnouncement(announcementToDelete)
+      setAnnouncements(announcements.filter(announcement => announcement.id !== announcementToDelete))
+      toast.success('Announcement deleted successfully')
     } catch (error) {
       console.error('Error deleting announcement:', error)
-      setError('Failed to delete announcement')
+      toast.error('Failed to delete announcement')
+    } finally {
+      setAnnouncementToDelete(null)
     }
   }
 
@@ -192,6 +200,16 @@ export default function AnnouncementsList() {
           )}
         </ul>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!announcementToDelete}
+        onClose={() => setAnnouncementToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

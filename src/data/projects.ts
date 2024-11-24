@@ -95,5 +95,61 @@ export const projects: Project[] = [
     githubUrl: 'https://github.com/EmmanuelFabian/smart-home-energy-monitor',
     liveUrl: 'https://energy-monitor.emmanuelfabian.com',
     featured: true
+  },
+  {
+    id: 'beano-web-design',
+    title: 'Beano Web Design',
+    subtitle: 'Professional Web Design & Development Agency',
+    description: `
+      A modern, user-friendly website showcasing web design and development services.
+      Features a mobile-first approach, comprehensive service offerings, and tailored packages for different client needs.
+    `,
+    content: `
+      # Beano Web Design
+
+      A professional web design and development agency website that effectively communicates services and expertise to potential clients.
+      
+      ## Key Features
+      
+      ### Clear Navigation
+      - Intuitive main menu structure
+      - Easy access to key sections (Home, About, Services, Our Work, Packages, Contact)
+      - Smooth user journey through the site
+      
+      ### Mobile-First Design
+      - Responsive layout optimized for all devices
+      - Enhanced user experience across platforms
+      - Seamless navigation on mobile devices
+      
+      ### Comprehensive Services
+      Our development process includes:
+      - Planning
+      - Design
+      - Build
+      - Test & Train
+      - Launch
+      - Support
+      
+      ### Service Packages
+      Tailored solutions for different needs:
+      - Starter Website
+      - Large Brochure Style Website
+      - E-commerce Website
+      
+      ### Portfolio Showcase
+      Featuring diverse projects including:
+      - Natours
+      - Omnifood
+      - Cuisine Restaurant
+      
+      ## Technology
+      
+      Built using modern web technologies focusing on performance, accessibility, and user experience.
+    `,
+    image: '/images/projects/beano-web-design.webp',
+    technologies: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'Responsive Design'],
+    liveUrl: 'https://beanowebdesign.com/',
+    featured: true,
+    slug: 'beano-web-design'
   }
 ]

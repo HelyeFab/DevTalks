@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
+import { format } from 'date-fns'
 import { useAuth } from '@/contexts/auth-context'
 import { PenSquare, Trash2, Eye } from 'lucide-react'
 import { getAllPosts, deletePost, updatePost, type BlogPost } from '@/lib/blog'
+import { ConfirmationModal } from '@/components/ui/confirmation-modal'
+import { toast } from 'sonner'
 
 export default function PostsList() {
   const { user, loading, isAdmin } = useAuth()
@@ -13,6 +17,7 @@ export default function PostsList() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [postToDelete, setPostToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -41,20 +46,6 @@ export default function PostsList() {
     }
   }, [user, isAdmin])
 
-  const handleDelete = async (postId: string) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) {
-      return
-    }
-
-    try {
-      await deletePost(postId)
-      setPosts(posts.filter(post => post.id !== postId))
-    } catch (error) {
-      console.error('Error deleting post:', error)
-      setError('Failed to delete post')
-    }
-  }
-
   const handleTogglePublish = async (post: BlogPost) => {
     if (!post.id) return
 
@@ -74,6 +65,25 @@ export default function PostsList() {
     } catch (error) {
       console.error('Error updating post:', error)
       setError('Failed to update post')
+    }
+  }
+
+  const handleDelete = async (postId: string) => {
+    setPostToDelete(postId)
+  }
+
+  const confirmDelete = async () => {
+    if (!postToDelete) return
+
+    try {
+      await deletePost(postToDelete)
+      setPosts(posts.filter(post => post.id !== postToDelete))
+      toast.success('Post deleted successfully')
+    } catch (error) {
+      console.error('Error deleting post:', error)
+      toast.error('Failed to delete post')
+    } finally {
+      setPostToDelete(null)
     }
   }
 
@@ -105,9 +115,9 @@ export default function PostsList() {
           </Link>
           <Link
             href="/admin/posts/new"
-            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           >
-            Create New Post
+            Create New
           </Link>
         </div>
       </div>
@@ -215,6 +225,16 @@ export default function PostsList() {
           </table>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!postToDelete}
+        onClose={() => setPostToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }
