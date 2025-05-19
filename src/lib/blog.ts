@@ -24,23 +24,8 @@ import type { BlogPost, Author } from '@/types/blog'
 
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 
-export interface BlogPost {
-  id?: string
-  title: string
-  subtitle: string
-  content: string
-  excerpt?: string
-  image?: string
-  imageAlt?: string
-  tags: string[]
-  author: Author
-  date: string
-  slug: string
-  published: boolean
-  publishedAt?: string
-  upvotes?: number
-  readTime?: number
-}
+// Export the imported type for convenience
+export type { BlogPost, Author }
 
 class BlogError extends Error {
   constructor(message: string, public originalError?: FirestoreError) {
@@ -55,8 +40,8 @@ const UPVOTES_COLLECTION = 'post_upvotes'
 // Helper function to convert Firestore data to BlogPost
 function convertPost(id: string, data: DocumentData): BlogPost {
   // Ensure all date fields are converted to ISO strings
-  const date = data.date instanceof Timestamp 
-    ? data.date.toDate().toISOString() 
+  const date = data.date instanceof Timestamp
+    ? data.date.toDate().toISOString()
     : typeof data.date === 'string'
       ? data.date
       : new Date().toISOString()
@@ -106,7 +91,7 @@ export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> 
 
     const auth = getAuth()
     const user = auth.currentUser
-    
+
     if (!user) {
       throw new BlogError('User must be authenticated to create posts')
     }
@@ -228,12 +213,25 @@ export async function getAllPosts(publishedOnly = true): Promise<BlogPost[]> {
       throw new Error('Firestore is not initialized')
     }
 
+    // Using a simpler query approach to avoid index issues
     const postsRef = collection(db, COLLECTION_NAME)
-    const constraints = publishedOnly ? [where('published', '==', true)] : []
-    const q = query(postsRef, ...constraints, orderBy('date', 'desc'))
-    
-    const querySnapshot = await getDocs(q)
-    return querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()))
+    let querySnapshot;
+
+    // Get all posts without complex queries
+    const q = query(postsRef);
+    querySnapshot = await getDocs(q);
+
+    // Process the results in memory
+    let allPosts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
+
+    // Filter and sort in memory
+    if (publishedOnly) {
+      allPosts = allPosts.filter(post => post.published);
+    }
+
+    // Sort by date descending
+    return allPosts.sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime());
   } catch (error) {
     console.error('Error getting posts:', error)
     throw new BlogError(
@@ -263,7 +261,7 @@ export async function getPostBySlug(slug: string, includeDrafts = false): Promis
     }
 
     const querySnapshot = await getDocs(q)
-    
+
     if (querySnapshot.empty) {
       return null
     }

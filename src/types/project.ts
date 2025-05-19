@@ -1,4 +1,5 @@
 export type Project = {
+  id?: string
   title: string
   slug: string
   description: string
@@ -7,10 +8,8 @@ export type Project = {
   githubUrl?: string
   liveUrl?: string
   featured: boolean
-  details: {
-    challenge: string
-    solution: string
-    impact: string
-    features: string[]
-  }
+  content: string
+  subtitle?: string
+  createdAt?: string
+  updatedAt?: string
 }

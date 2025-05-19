@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAnnouncementBySlug, getAnnouncement } from '@/lib/announcements'
+import { getAnnouncement, Announcement } from '@/lib/announcements'
 import { getAuth } from '@/lib/firebase-admin'
 import { getFirestore } from 'firebase-admin/firestore'
-import { UpdateAnnouncementData } from '@/types/announcement'
+
+// Define UpdateAnnouncementData interface
+interface UpdateAnnouncementData extends Partial<Announcement> {}
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +12,8 @@ export async function GET(
   request: Request,
   { params }: { params: { slug: string } }
 ) {
-  if (!params.slug || typeof params.slug !== 'string' || params.slug === 'undefined') {
+  const resolvedParams = await params;
+  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string' || resolvedParams.slug === 'undefined') {
     return NextResponse.json(
       { error: 'Invalid announcement URL' },
       { status: 400 }
@@ -18,8 +21,8 @@ export async function GET(
   }
 
   try {
-    const announcement = await getAnnouncementBySlug(params.slug)
-    
+    const announcement = await getAnnouncement(resolvedParams.slug)
+
     if (!announcement) {
       return NextResponse.json(
         { error: 'Announcement not found' },
@@ -39,7 +42,8 @@ export async function GET(
 
 export async function PUT(request: NextRequest, { params }: { params: { slug: string } }) {
   console.log('\n--- Updating announcement ---')
-  const { slug } = params
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
 
   try {
     console.log('Updating announcement:', { slug })
@@ -80,11 +84,16 @@ export async function PUT(request: NextRequest, { params }: { params: { slug: st
       )
     }
 
-    // Try to get announcement by slug first, then by ID if not found
-    let announcement = await getAnnouncementBySlug(slug)
-    if (!announcement) {
-      announcement = await getAnnouncement(slug)
+    // Get announcement by ID
+    if (!slug) {
+      return NextResponse.json(
+        { error: 'Invalid announcement ID' },
+        { status: 400 }
+      )
     }
+
+    // TypeScript won't detect the early return above, so we need an explicit non-null assertion
+    const announcement = await getAnnouncement(slug!)
 
     if (!announcement) {
       return NextResponse.json(
@@ -116,7 +125,8 @@ export async function PUT(request: NextRequest, { params }: { params: { slug: st
 
 export async function DELETE(request: NextRequest, { params }: { params: { slug: string } }) {
   console.log('\n--- Deleting announcement ---')
-  const { slug } = params
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
 
   try {
     // Get authorization header
@@ -152,11 +162,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
       )
     }
 
-    // Try to get announcement by slug first, then by ID if not found
-    let announcement = await getAnnouncementBySlug(slug)
-    if (!announcement) {
-      announcement = await getAnnouncement(slug)
+    // Get announcement by ID
+    if (!slug) {
+      return NextResponse.json(
+        { error: 'Invalid announcement ID' },
+        { status: 400 }
+      )
     }
+
+    // TypeScript won't detect the early return above, so we need an explicit non-null assertion
+    const announcement = await getAnnouncement(slug!)
 
     if (!announcement) {
       return NextResponse.json(

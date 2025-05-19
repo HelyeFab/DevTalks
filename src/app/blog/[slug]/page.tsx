@@ -13,7 +13,8 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const slug = params.slug;
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
   if (!slug) {
     return {
       title: "Post Not Found",
@@ -49,7 +50,8 @@ export default async function BlogPost({
 }: {
   params: { slug: string };
 }) {
-  const slug = params.slug;
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
   if (!slug) {
     console.warn("No slug provided in params");
     notFound();

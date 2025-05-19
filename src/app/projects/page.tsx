@@ -1,15 +1,17 @@
 import { Metadata } from 'next'
 import { ProjectCard } from '@/components/project-card'
-import { projects } from '@/data/projects'
+import { getAllProjects } from '@/lib/projects'
+import { Project } from '@/types/project'
 
 export const metadata: Metadata = {
   title: 'Projects - Emmanuel Fabiani',
   description: 'A showcase of my work in AI, web development, and technology.',
 }
 
-export default function ProjectsPage() {
-  const featuredProjects = projects.filter((project) => project.featured)
-  const otherProjects = projects.filter((project) => !project.featured)
+export default async function ProjectsPage() {
+  const projects = await getAllProjects()
+  const featuredProjects = projects.filter((project: Project) => project.featured)
+  const otherProjects = projects.filter((project: Project) => !project.featured)
 
   return (
     <div className="container mx-auto px-4 max-w-6xl py-12">

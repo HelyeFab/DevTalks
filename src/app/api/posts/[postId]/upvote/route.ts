@@ -12,7 +12,8 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting upvote operation ---')
-  const postId = context.params.postId
+  const resolvedParams = await context.params;
+  const postId = resolvedParams.postId
 
   try {
     // Get authorization header

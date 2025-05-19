@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         request.auth.token.email == string(get(/databases/$(database)/documents/env/admin).data.adminEmail);
     }
 
@@ -38,6 +38,18 @@ service cloud.firestore {
         allow delete: if isAuthenticated() &&
           resource.data.userId == request.auth.uid;
       }
+    }
+
+    // Projects collection
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Announcements collection
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Environment variables

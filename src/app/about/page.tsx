@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import { Github, Mail, Linkedin } from 'lucide-react'
-import { projects } from '@/data/projects'
+import { getAllProjects } from '@/lib/projects'
 import { ProjectSlideshow } from '@/components/project-slideshow'
 
 export const metadata: Metadata = {
@@ -9,8 +9,15 @@ export const metadata: Metadata = {
   description: 'Software engineer, writer, and creator.',
 }
 
-export default function AboutPage() {
-  const featuredProjects = projects.filter(project => project.featured)
+export default async function AboutPage() {
+  // Try to get featured projects, but have a fallback in case of errors
+  let featuredProjects: Array<import('@/types/project').Project> = [];
+  try {
+    featuredProjects = await getAllProjects(true); // true means featured only
+  } catch (error) {
+    console.error('Error getting projects:', error);
+    // Continue with empty array if there's an error
+  }
 
   return (
     <div className="container mx-auto px-4 max-w-6xl py-12">

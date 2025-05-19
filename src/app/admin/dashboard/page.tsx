@@ -4,11 +4,11 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
-import { 
-  PenSquare, 
-  FileText, 
-  Settings, 
-  BarChart3, 
+import {
+  PenSquare,
+  FileText,
+  Settings,
+  BarChart3,
   Image as ImageIcon,
   LogOut,
   Bell
@@ -54,6 +54,22 @@ export default function AdminDashboard() {
       description: 'Manage existing posts',
       icon: FileText,
       href: '/admin/posts',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    },
+    {
+      title: 'New Project',
+      description: 'Create a new project',
+      icon: PenSquare,
+      href: '/admin/projects/new',
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+    },
+    {
+      title: 'All Projects',
+      description: 'Manage existing projects',
+      icon: FileText,
+      href: '/admin/projects',
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     },

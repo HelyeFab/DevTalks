@@ -14,7 +14,8 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comments fetch ---')
-  const postId = context.params.postId
+  const resolvedParams = await context.params;
+  const postId = resolvedParams.postId
 
   try {
     console.log('Fetching comments for post:', { postId })
@@ -29,7 +30,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comment creation ---')
-  const postId = context.params.postId
+  const resolvedParams = await context.params;
+  const postId = resolvedParams.postId
 
   try {
     console.log('Creating comment for post:', { postId })
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // Get authorization header
     const authHeader = request.headers.get('Authorization')
     console.log('Auth header present:', !!authHeader)
-    
+
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Invalid auth header format:', authHeader?.substring(0, 20))
       return NextResponse.json(
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // Verify the token
     const token = authHeader.split('Bearer ')[1]
     console.log('Token to verify:', token.substring(0, 20) + '...')
-    
+
     try {
       // Verify the token
       console.log('Verifying token...')
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       // Get request body
       const data = await request.json() as CreateCommentData
-      console.log('Request body:', { 
+      console.log('Request body:', {
         content: data.content?.substring(0, 50),
         postId: data.postId,
         parentId: data.parentId

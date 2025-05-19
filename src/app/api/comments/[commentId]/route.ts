@@ -24,14 +24,14 @@ async function isAdmin(uid: string): Promise<boolean> {
 export async function PUT(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comment update ---')
   try {
-    const { params } = context
-    const commentId = params.commentId
+    const resolvedContext = await context;
+    const commentId = resolvedContext.params.commentId
     console.log('Updating comment:', { commentId })
 
     // Get authorization header
     const authHeader = request.headers.get('Authorization')
     console.log('Auth header present:', !!authHeader)
-    
+
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Invalid auth header format:', authHeader?.substring(0, 20))
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Verify the token
     const token = authHeader.split('Bearer ')[1]
     console.log('Token to verify:', token.substring(0, 20) + '...')
-    
+
     try {
       // Get Firebase Admin auth instance
       console.log('Getting Firebase Admin auth instance...')
@@ -60,12 +60,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       })
 
       // Get request body
-      const { content } = await request.json()
-      console.log('Request body:', { content: content?.substring(0, 50) })
+      const { content, postId } = await request.json()
+      console.log('Request body:', { content: content?.substring(0, 50), postId })
 
       // Update the comment
       console.log('Updating comment...')
-      const updatedComment = await updateComment(commentId, content, decodedToken.uid)
+      const updatedComment = await updateComment(commentId, decodedToken.uid, { content, postId })
       console.log('Comment updated successfully')
 
       return NextResponse.json(updatedComment)
@@ -88,14 +88,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comment deletion ---')
   try {
-    const { params } = context
-    const commentId = params.commentId
+    const resolvedContext = await context;
+    const commentId = resolvedContext.params.commentId
     console.log('Deleting comment:', { commentId })
 
     // Get authorization header
     const authHeader = request.headers.get('Authorization')
     console.log('Auth header present:', !!authHeader)
-    
+
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Invalid auth header format:', authHeader?.substring(0, 20))
       return NextResponse.json(
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     // Verify the token
     const token = authHeader.split('Bearer ')[1]
     console.log('Token to verify:', token.substring(0, 20) + '...')
-    
+
     try {
       // Get Firebase Admin auth instance
       console.log('Getting Firebase Admin auth instance...')
@@ -127,9 +127,20 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       const userIsAdmin = await isAdmin(decodedToken.uid)
       console.log('User admin status:', { isAdmin: userIsAdmin })
 
+      // Get postId from request query or body
+      const url = new URL(request.url)
+      const postId = url.searchParams.get('postId')
+
+      if (!postId) {
+        return NextResponse.json(
+          { error: 'Missing postId parameter' },
+          { status: 400 }
+        )
+      }
+
       // Delete the comment
-      console.log('Deleting comment...')
-      const success = await deleteComment(commentId, decodedToken.uid, userIsAdmin)
+      console.log('Deleting comment...', { postId })
+      const success = await deleteComment(commentId, decodedToken.uid, userIsAdmin, postId)
       console.log('Comment deletion result:', { success })
 
       if (!success) {

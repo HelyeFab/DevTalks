@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Github, ExternalLink } from 'lucide-react'
-import { projects } from '@/data/projects'
+import { getProjectBySlug } from '@/lib/projects'
 import { Markdown } from '@/components/markdown'
 
 interface Props {
@@ -14,8 +14,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug = await Promise.resolve(params.slug)
-  const project = projects.find((p) => p.slug === slug)
-  
+  const project = await getProjectBySlug(slug)
+
   if (!project) {
     return {
       title: 'Project Not Found',
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectPage({ params }: Props) {
   const slug = await Promise.resolve(params.slug)
-  const project = projects.find((p) => p.slug === slug)
+  const project = await getProjectBySlug(slug)
 
   if (!project) {
     notFound()
@@ -103,7 +103,7 @@ export default async function ProjectPage({ params }: Props) {
       </header>
 
       <div className="prose dark:prose-invert max-w-none">
-        <Markdown>{project.content}</Markdown>
+        <Markdown content={project.content} />
       </div>
     </article>
   )

@@ -20,10 +20,10 @@ export interface Announcement {
   title: string
   content: string
   pinned: boolean
-  startDate?: string
-  endDate?: string
+  startDate?: string | null
+  endDate?: string | null
   published: boolean
-  publishedAt?: string
+  publishedAt?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -81,7 +81,7 @@ export const updateAnnouncement = async (id: string, updates: Partial<Announceme
   try {
     const announcementRef = doc(db, 'announcements', id)
     const now = new Date().toISOString()
-    
+
     // Convert undefined values to null for Firestore
     const updatedData = {
       ...updates,
@@ -157,17 +157,15 @@ export const getActiveAnnouncements = async (): Promise<Announcement[]> => {
   try {
     const now = new Date().toISOString()
     console.log('Current date:', now)
-    
-    // Query for published announcements
-    const q = query(
-      collection(db, 'announcements'),
-      where('published', '==', true),
-      orderBy('pinned', 'desc'),
-      orderBy('startDate', 'desc')
-    )
+
+    // Use a simpler query approach to avoid index issues
+    const q = query(collection(db, 'announcements'))
 
     const querySnapshot = await getDocs(q)
     const announcements = querySnapshot.docs.map(doc => convertAnnouncement(doc.id, doc.data()))
+
+    // Filter for published announcements in memory
+    const publishedAnnouncements = announcements.filter(announcement => announcement.published)
     console.log('All announcements from Firestore:', announcements.map(a => ({
       id: a.id,
       title: a.title,
@@ -208,7 +206,7 @@ export const getActiveAnnouncements = async (): Promise<Announcement[]> => {
       title: a.title,
       pinned: a.pinned
     })))
-    
+
     return activeAnnouncements
   } catch (error) {
     console.error('Error getting active announcements:', error)
