@@ -28,9 +28,9 @@ export default function ProjectsList() {
     async function fetchProjects() {
       try {
         console.log('Fetching all projects...')
-        const fetchedProjects = await getAllProjects()
-        console.log('Fetched projects:', fetchedProjects)
-        setProjects(fetchedProjects)
+        const result = await getAllProjects()
+        console.log('Fetched projects:', result)
+        setProjects(result.items)
       } catch (error) {
         console.error('Error fetching projects:', error)
         setError('Failed to load projects')

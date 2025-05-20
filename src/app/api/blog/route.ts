@@ -1,130 +1,83 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getAuth } from 'firebase-admin/auth'
-import { getFirestore } from 'firebase-admin/firestore'
-import { BlogPost } from '@/types/blog'
-import { initAdmin } from '@/lib/firebase-admin'
+import { NextRequest, NextResponse } from 'next/server';
+import { getAllPosts, getPostBySlug, createPost } from '@/lib/blog';
+import { getPaginationFromRequest } from '@/lib/pagination';
+import { getCacheSettingsForPublicData } from '@/lib/cache-control';
+import { blogPostSchema } from '@/lib/validation';
+import { createApiHandler, ApiRequest } from '@/lib/api-wrapper';
 
-const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
+export const dynamic = 'force-dynamic';
 
-// Initialize Firebase Admin
-const { auth, db } = initAdmin()
+/**
+ * GET handler for retrieving blog posts with pagination
+ */
+export const GET = createApiHandler(
+  async (request: ApiRequest) => {
+    // Get pagination parameters from the request
+    const pagination = getPaginationFromRequest(request);
 
-// Helper function to check if user is admin
-async function isAdmin(req: NextRequest) {
-  try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return false
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const publishedOnly = searchParams.get('published') !== 'false';
+    const tag = searchParams.get('tag');
+    const slug = searchParams.get('slug');
+
+    // If slug is provided, return a single post
+    if (slug) {
+      const post = await getPostBySlug(slug, !publishedOnly);
+
+      if (!post) {
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(post);
     }
 
-    const token = authHeader.split('Bearer ')[1]
-    const decodedToken = await auth.verifyIdToken(token)
-    return decodedToken.email === ADMIN_EMAIL
-  } catch (error) {
-    console.error('Error verifying admin status:', error)
-    return false
+    // Get blog posts with pagination
+    const postsResult = await getAllPosts({
+      publishedOnly,
+      pagination
+    });
+
+    // Return the paginated posts
+    return NextResponse.json(postsResult);
+  },
+  {
+    // Add caching for GET requests
+    cache: getCacheSettingsForPublicData(),
+
+    // Add rate limiting to prevent abuse
+    rateLimit: {
+      limit: 100,
+      windowMs: 60 * 1000, // 1 minute
+    }
   }
-}
+);
 
-export async function POST(req: NextRequest) {
-  console.log('Handling POST request to /api/blog')
+/**
+ * POST handler for creating a new blog post (admin only)
+ */
+export const POST = createApiHandler(
+  async (request: ApiRequest) => {
+    // The validated data is available due to the schema in the config
+    const postData = request.validatedData!;
 
-  try {
-    // Check admin status
-    if (!await isAdmin(req)) {
-      console.error('Unauthorized access attempt')
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    // Create the blog post (the auth check is handled by the wrapper)
+    const newPost = await createPost(postData);
+
+    return NextResponse.json(newPost, { status: 201 });
+  },
+  {
+    // Require authentication and admin privileges
+    requireAuth: true,
+    requireAdmin: true,
+
+    // Validate against the blog post schema
+    schema: blogPostSchema,
+
+    // Add rate limiting
+    rateLimit: {
+      limit: 20,
+      windowMs: 60 * 1000 // 1 minute
     }
-
-    // Parse request body
-    const data = await req.json() as BlogPost
-    console.log('Creating post:', {
-      title: data.title,
-      excerpt: data.excerpt?.substring(0, 50) + '...',
-    })
-
-    // Create post
-    const postRef = db.collection('blog')
-    const docRef = await postRef.add(data)
-    const post = { id: docRef.id, ...data }
-    console.log('Post created:', { id: post.id })
-
-    return NextResponse.json(post)
-  } catch (error) {
-    console.error('Error creating post:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create post' },
-      { status: 500 }
-    )
   }
-}
-
-export async function PUT(req: NextRequest) {
-  try {
-    // Check admin status
-    if (!await isAdmin(req)) {
-      console.error('Unauthorized access attempt')
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Parse request body
-    const { id, ...data } = await req.json() as BlogPost & { id: string }
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Post ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Update post
-    const postRef = db.collection('blog').doc(id)
-    await postRef.update(data)
-
-    return NextResponse.json({ id, ...data })
-  } catch (error) {
-    console.error('Error updating post:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update post' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(req: NextRequest) {
-  try {
-    // Check admin status
-    if (!await isAdmin(req)) {
-      console.error('Unauthorized access attempt')
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Parse request body
-    const { id } = await req.json() as { id: string }
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Post ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Delete post
-    await db.collection('blog').doc(id).delete()
-
-    return NextResponse.json({ id })
-  } catch (error) {
-    console.error('Error deleting post:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete post' },
-      { status: 500 }
-    )
-  }
-}
+);

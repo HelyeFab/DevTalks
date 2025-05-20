@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAnnouncement, Announcement } from '@/lib/announcements'
-import { getAuth } from '@/lib/firebase-admin'
-import { getFirestore } from 'firebase-admin/firestore'
+import { withAuth, createErrorResponse } from '@/lib/auth-middleware'
+import { initAdmin } from '@/lib/firebase-admin'
 
 // Define UpdateAnnouncementData interface
 interface UpdateAnnouncementData extends Partial<Announcement> {}
 
 export const dynamic = 'force-dynamic'
+
+const { db } = initAdmin()
 
 export async function GET(
   request: Request,
@@ -33,165 +35,154 @@ export async function GET(
     return NextResponse.json(announcement)
   } catch (error) {
     console.error('Error fetching announcement:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return createErrorResponse('Failed to fetch announcement')
+  }
+}
+
+/**
+ * Helper function to get an announcement by slug from params
+ */
+async function getAnnouncementBySlugParam(slug: string | undefined): Promise<Announcement | null> {
+  if (!slug || typeof slug !== 'string') {
+    return null;
+  }
+
+  // Using non-null assertion (!) since we've already checked that slug is a string
+  return await getAnnouncement(slug!);
+}
+
+// Utility function to assert string type
+function assertString(value: string | undefined): asserts value is string {
+  if (typeof value !== 'string' || !value) {
+    throw new Error('Value must be a string');
+  }
+}
+
+// TypeScript-friendly announcement retriever
+async function getAnnouncementById(id: string): Promise<Announcement | null> {
+  try {
+    return await getAnnouncement(id);
+  } catch (error) {
+    console.error("Error retrieving announcement:", error);
+    return null;
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { slug: string } }) {
   console.log('\n--- Updating announcement ---')
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
 
-  try {
-    console.log('Updating announcement:', { slug })
-
-    // Get authorization header
-    const authHeader = request.headers.get('Authorization')
-    console.log('Auth header present:', !!authHeader)
-
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header missing' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token
-    const token = authHeader.split('Bearer ')[1]
-    const decodedToken = await getAuth().verifyIdToken(token)
-    console.log('Token verified for user:', decodedToken.uid)
-
-    // Get the user's profile to check if they're an admin
-    const db = getFirestore()
-    const profileRef = db.collection('profiles').doc(decodedToken.uid)
-    const profileSnap = await profileRef.get()
-
-    if (!profileSnap.exists) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      )
-    }
-
-    const isAdmin = profileSnap.data()?.isAdmin
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
-
-    // Get announcement by ID
-    if (!slug) {
-      return NextResponse.json(
-        { error: 'Invalid announcement ID' },
-        { status: 400 }
-      )
-    }
-
-    // TypeScript won't detect the early return above, so we need an explicit non-null assertion
-    const announcement = await getAnnouncement(slug!)
-
-    if (!announcement) {
-      return NextResponse.json(
-        { error: 'Announcement not found' },
-        { status: 404 }
-      )
-    }
-
-    // Get the update data from the request body
-    const updateData: UpdateAnnouncementData = await request.json()
-    console.log('Update data:', updateData)
-
-    // Update the announcement
-    const announcementRef = db.collection('announcements').doc(announcement.id)
-    await announcementRef.update({
-      ...updateData,
-      updatedAt: new Date(),
-    })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error updating announcement:', error)
+  // Early validation and conversion to string
+  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Invalid announcement ID' },
+      { status: 400 }
     )
   }
+
+  // Explicitly create a string variable
+  const slug: string = resolvedParams.slug;
+
+  // Require admin privileges for this route
+  return withAuth(request, async (authContext) => {
+    try {
+      console.log('Updating announcement:', { slug })
+      console.log('Authenticated user:', {
+        uid: authContext.userId,
+        email: authContext.email,
+        isAdmin: authContext.isAdmin
+      })
+
+      // Check if user is admin
+      if (!authContext.isAdmin) {
+        return NextResponse.json(
+          { error: 'Admin access required' },
+          { status: 403 }
+        )
+      }
+
+      // Using our TypeScript-friendly function with the string variable
+      const announcement = await getAnnouncementById(slug)
+
+      if (!announcement) {
+        return NextResponse.json(
+          { error: 'Announcement not found' },
+          { status: 404 }
+        )
+      }
+
+      // Get the update data from the request body
+      const updateData: UpdateAnnouncementData = await request.json()
+      console.log('Update data:', updateData)
+
+      // Update the announcement
+      const announcementRef = db.collection('announcements').doc(announcement.id)
+      await announcementRef.update({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      console.error('Error updating announcement:', error)
+      return createErrorResponse(error instanceof Error ? error.message : 'Failed to update announcement')
+    }
+  }, true) // requireAdmin=true
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { slug: string } }) {
   console.log('\n--- Deleting announcement ---')
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
 
-  try {
-    // Get authorization header
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization header missing' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token
-    const token = authHeader.split('Bearer ')[1]
-    const decodedToken = await getAuth().verifyIdToken(token)
-
-    // Get the user's profile to check if they're an admin
-    const db = getFirestore()
-    const profileRef = db.collection('profiles').doc(decodedToken.uid)
-    const profileSnap = await profileRef.get()
-
-    if (!profileSnap.exists) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      )
-    }
-
-    const isAdmin = profileSnap.data()?.isAdmin
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
-
-    // Get announcement by ID
-    if (!slug) {
-      return NextResponse.json(
-        { error: 'Invalid announcement ID' },
-        { status: 400 }
-      )
-    }
-
-    // TypeScript won't detect the early return above, so we need an explicit non-null assertion
-    const announcement = await getAnnouncement(slug!)
-
-    if (!announcement) {
-      return NextResponse.json(
-        { error: 'Announcement not found' },
-        { status: 404 }
-      )
-    }
-
-    // Delete the announcement
-    const announcementRef = db.collection('announcements').doc(announcement.id)
-    await announcementRef.delete()
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting announcement:', error)
+  // Early validation and conversion to string
+  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Invalid announcement ID' },
+      { status: 400 }
     )
   }
+
+  // Explicitly create a string variable
+  const slug: string = resolvedParams.slug;
+
+  // Require admin privileges for this route
+  return withAuth(request, async (authContext) => {
+    try {
+      console.log('Deleting announcement:', { slug })
+      console.log('Authenticated user:', {
+        uid: authContext.userId,
+        email: authContext.email,
+        isAdmin: authContext.isAdmin
+      })
+
+      // Check if user is admin
+      if (!authContext.isAdmin) {
+        return NextResponse.json(
+          { error: 'Admin access required' },
+          { status: 403 }
+        )
+      }
+
+      // Using our TypeScript-friendly function with the string variable
+      const announcement = await getAnnouncementById(slug)
+
+      if (!announcement) {
+        return NextResponse.json(
+          { error: 'Announcement not found' },
+          { status: 404 }
+        )
+      }
+
+      // Delete the announcement
+      const announcementRef = db.collection('announcements').doc(announcement.id)
+      await announcementRef.delete()
+
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      console.error('Error deleting announcement:', error)
+      return createErrorResponse(error instanceof Error ? error.message : 'Failed to delete announcement')
+    }
+  }, true) // requireAdmin=true
 }
 
 // Handle other HTTP methods

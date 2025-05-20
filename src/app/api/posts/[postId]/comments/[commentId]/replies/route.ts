@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createComment } from '@/lib/comments'
 import { CreateCommentData } from '@/types/comment'
-import { getAuth } from '@/lib/firebase-admin'
+import { withAuth, createErrorResponse } from '@/lib/auth-middleware'
+import { validateRequestBody, commentSchema } from '@/lib/validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,42 +17,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const resolvedParams = await context.params;
   const { postId, commentId } = resolvedParams;
 
-  try {
-    console.log('Creating reply for comment:', { postId, commentId })
-
-    // Get authorization header
-    const authHeader = request.headers.get('Authorization')
-    console.log('Auth header present:', !!authHeader)
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.error('Invalid auth header format:', authHeader?.substring(0, 20))
-      return NextResponse.json(
-        { error: 'Authorization header required' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token
-    const token = authHeader.split('Bearer ')[1]
-    console.log('Token to verify:', token.substring(0, 20) + '...')
-
+  return withAuth(request, async (authContext) => {
     try {
-      // Get Firebase Admin auth instance
-      console.log('Getting Firebase Admin auth instance...')
-      const auth = getAuth()
-      console.log('Got Firebase Admin auth instance')
-
-      // Verify the token
-      console.log('Verifying token...')
-      const decodedToken = await auth.verifyIdToken(token)
-      console.log('Token verified successfully for user:', {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        name: decodedToken.name
+      console.log('Creating reply for comment:', { postId, commentId })
+      console.log('Authenticated user:', {
+        uid: authContext.userId,
+        email: authContext.email,
+        name: authContext.name
       })
 
-      // Get request body
-      const data = await request.json() as CreateCommentData
+      // Validate request body against schema
+      const validationResult = await validateRequestBody(request, commentSchema);
+      if (!validationResult.success) {
+        return validationResult.error;
+      }
+
+      const data = validationResult.data;
       console.log('Request body:', {
         content: data.content?.substring(0, 50),
         postId,
@@ -61,7 +42,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       // Create the reply
       console.log('Creating reply...')
       const newReply = await createComment(
-        decodedToken.uid,
+        authContext.userId,
         {
           name: data.author.name,
           email: data.author.email,
@@ -77,17 +58,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       return NextResponse.json(newReply)
     } catch (error) {
-      console.error('Error verifying token:', error instanceof Error ? error.message : 'Unknown error')
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Invalid authorization token' },
-        { status: 401 }
-      )
+      console.error('Error in POST /api/posts/[postId]/comments/[commentId]/replies:', error instanceof Error ? error.message : 'Unknown error')
+      return createErrorResponse(error instanceof Error ? error.message : 'Failed to create reply')
     }
-  } catch (error) {
-    console.error('Error in POST /api/posts/[postId]/comments/[commentId]/replies:', error instanceof Error ? error.message : 'Unknown error')
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    )
-  }
+  })
 }

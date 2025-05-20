@@ -4,15 +4,36 @@ import { initAdmin } from './firebase-admin'
 const POSTS_COLLECTION = 'blog_posts'
 const COMMENTS_COLLECTION = 'comments'
 
-const { db } = initAdmin()
+// Don't initialize db at module level as it won't pick up changes to the global store
+// Instead, get a fresh reference in each function
 
 export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
   console.log('Getting comments for post:', postId)
+
+  // Get a fresh reference to the database
+  const { db } = initAdmin()
+
+  // Validate postId
+  if (!postId || typeof postId !== 'string') {
+    throw new Error('Invalid post ID');
+  }
+
   try {
-    // Get all comments for the post
+    // First check if the post exists
+    const postRef = db.collection(POSTS_COLLECTION).doc(postId);
+    const postDoc = await postRef.get();
+
+    if (!postDoc.exists) {
+      console.log('Post not found:', postId);
+      return []; // Return empty array for non-existent posts
+    }
+
+    // Get all comments for the post from top-level comments collection
     console.log('Creating query for comments collection...')
-    const commentsRef = db.collection(POSTS_COLLECTION).doc(postId).collection(COMMENTS_COLLECTION)
-    const commentsQuery = commentsRef.orderBy('createdAt', 'desc')
+    const commentsRef = db.collection(COMMENTS_COLLECTION)
+    const commentsQuery = commentsRef
+      .where('postId', '==', postId)
+      .orderBy('createdAt', 'desc')
 
     console.log('Executing query...')
     const commentsSnapshot = await commentsQuery.get()
@@ -23,20 +44,25 @@ export async function getCommentsByPostId(postId: string): Promise<Comment[]> {
     const repliesMap = new Map<string, Comment[]>()
 
     commentsSnapshot.forEach((doc) => {
-      const data = doc.data()
-      const comment = {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
-      } as Comment
+      try {
+        const data = doc.data()
+        const comment = {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
+        } as Comment
 
-      if (data.parentId) {
-        const replies = repliesMap.get(data.parentId) || []
-        replies.push(comment)
-        repliesMap.set(data.parentId, replies)
-      } else {
-        topLevelComments.push(comment)
+        if (data.parentId) {
+          const replies = repliesMap.get(data.parentId) || []
+          replies.push(comment)
+          repliesMap.set(data.parentId, replies)
+        } else {
+          topLevelComments.push(comment)
+        }
+      } catch (docError) {
+        console.error('Error processing comment document:', docError);
+        // Skip this comment but continue processing others
       }
     })
 
@@ -65,6 +91,8 @@ export async function createComment(
   data: CreateCommentData
 ): Promise<Comment> {
   try {
+    // Get a fresh reference to the database
+    const { db } = initAdmin()
     const commentData = {
       content: data.content.trim(),
       postId: data.postId,
@@ -85,17 +113,24 @@ export async function createComment(
       }
     })
 
-    const docRef = await db.collection(POSTS_COLLECTION).doc(data.postId).collection(COMMENTS_COLLECTION).add(commentData)
+    // Add to top-level comments collection
+    const docRef = await db.collection(COMMENTS_COLLECTION).add(commentData)
     const docSnap = await docRef.get()
     const createdAt = new Date().toISOString()
+    const docData = docSnap.data() || {};
 
-    const newComment = {
+    // Ensure all required Comment properties are present
+    const newComment: Comment = {
       id: docRef.id,
-      ...docSnap.data(),
+      content: commentData.content,
+      postId: commentData.postId,
+      userId: commentData.userId,
+      author: commentData.author,
       createdAt,
       updatedAt: createdAt,
+      parentId: commentData.parentId || undefined,
       replies: []
-    } as Comment
+    }
 
     console.log('Comment created successfully:', {
       id: newComment.id,
@@ -115,7 +150,9 @@ export async function updateComment(
   data: UpdateCommentData
 ): Promise<void> {
   try {
-    const commentRef = db.collection(POSTS_COLLECTION).doc(data.postId).collection(COMMENTS_COLLECTION).doc(commentId)
+    // Get a fresh reference to the database
+    const { db } = initAdmin()
+    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
     const commentSnap = await commentRef.get()
 
     if (!commentSnap.exists) {
@@ -144,7 +181,9 @@ export async function deleteComment(
   postId: string
 ): Promise<boolean> {
   try {
-    const commentRef = db.collection(POSTS_COLLECTION).doc(postId).collection(COMMENTS_COLLECTION).doc(commentId)
+    // Get a fresh reference to the database
+    const { db } = initAdmin()
+    const commentRef = db.collection(COMMENTS_COLLECTION).doc(commentId)
     const commentSnap = await commentRef.get()
 
     if (!commentSnap.exists) {

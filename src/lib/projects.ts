@@ -19,7 +19,8 @@ import { getAuth } from 'firebase/auth'
 import { Project } from '@/types/project'
 export type { Project }
 
-const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
+// Use environment variable for admin email
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 
 class ProjectError extends Error {
   constructor(message: string, public originalError?: FirestoreError) {
@@ -194,31 +195,44 @@ export async function getProject(id: string): Promise<Project | null> {
   }
 }
 
-export async function getAllProjects(featuredOnly = false): Promise<Project[]> {
+import { PaginationParams, PaginationResult, DEFAULT_PAGINATION, paginateArray } from './pagination';
+
+/**
+ * Get all projects with pagination support
+ */
+export async function getAllProjects(
+  options: {
+    featuredOnly?: boolean,
+    pagination?: PaginationParams
+  } = {}
+): Promise<PaginationResult<Project>> {
   try {
     if (!db) {
       throw new Error('Firestore is not initialized')
     }
 
-    const projectsRef = collection(db, COLLECTION_NAME)
+    const { featuredOnly = false, pagination = DEFAULT_PAGINATION } = options;
 
-    // If we're having index issues, use a simpler query approach temporarily
-    let querySnapshot;
+    const projectsRef = collection(db, COLLECTION_NAME);
+    let q = query(projectsRef);
+
+    // Note: Firestore requires composite indexes for complex queries
+    // For now, use a simpler approach to avoid index errors
+
+    // Just sort by createdAt
+    q = query(projectsRef, orderBy('createdAt', pagination.orderDirection || 'desc'));
+
+    // Execute the query
+    const querySnapshot = await getDocs(q);
+    let allProjects = querySnapshot.docs.map(doc => convertProject(doc.id, doc.data()));
+
+    // Filter in memory if needed
     if (featuredOnly) {
-      // Just get all projects and filter in memory temporarily
-      const q = query(projectsRef);
-      querySnapshot = await getDocs(q);
-      const allProjects = querySnapshot.docs.map(doc => convertProject(doc.id, doc.data()));
-      return allProjects.filter(project => project.featured)
-        .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-    } else {
-      // Get all projects and sort in memory
-      const q = query(projectsRef);
-      querySnapshot = await getDocs(q);
-      const allProjects = querySnapshot.docs.map(doc => convertProject(doc.id, doc.data()));
-      return allProjects.sort((a, b) =>
-        new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+      allProjects = allProjects.filter(project => project.featured);
     }
+
+    // Apply pagination
+    return paginateArray(allProjects, pagination);
   } catch (error) {
     console.error('Error getting projects:', error)
     throw new ProjectError(

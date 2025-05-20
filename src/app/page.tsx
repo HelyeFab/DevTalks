@@ -14,7 +14,8 @@ export const metadata: Metadata = {
 export const revalidate = 3600 // Revalidate every hour
 
 export default async function HomePage() {
-  const posts = serializeBlogPosts(await getAllPosts())
+  const result = await getAllPosts()
+  const posts = serializeBlogPosts(result.items)
   const announcements = await getActiveAnnouncements()
 
   return (

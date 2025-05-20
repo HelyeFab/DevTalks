@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 }
 
 export default async function ProjectsPage() {
-  const projects = await getAllProjects()
+  const result = await getAllProjects()
+  const projects = result.items
   const featuredProjects = projects.filter((project: Project) => project.featured)
   const otherProjects = projects.filter((project: Project) => !project.featured)
 

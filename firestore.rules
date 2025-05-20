@@ -22,22 +22,29 @@ service cloud.firestore {
     match /blog_posts/{postId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
 
-      // Comments subcollection
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isAuthenticated();
-        allow update, delete: if isAuthenticated() &&
-          ((resource.data.userId == request.auth.uid) || isAdmin());
-      }
+    // Comments collection (top-level)
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        ((resource.data.userId == request.auth.uid) || isAdmin());
+    }
 
-      // Upvotes subcollection
-      match /upvotes/{upvoteId} {
-        allow read: if true;
-        allow create: if isAuthenticated();
-        allow delete: if isAuthenticated() &&
-          resource.data.userId == request.auth.uid;
-      }
+    // Upvotes collection
+    match /upvotes/{upvoteId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // Allow read of upvotes sub-collection
+    match /blog_posts/{postId}/upvotes/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Projects collection
@@ -52,9 +59,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Environment variables
+    // Environment variables - Restrict access to admin only
     match /env/{docId} {
-      allow read: if true;
+      allow read: if isAdmin(); // Only admins can read environment variables
+      allow write: if isAdmin(); // Only admins can write environment variables
     }
   }
 }

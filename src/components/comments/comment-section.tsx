@@ -18,6 +18,9 @@ export function CommentSection({ postId }: Props) {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const { user, loading: authLoading } = useAuth()
 
+  // Check if we're in the test blog post (development mode convenience)
+  const isTestPost = postId === 'test' || postId === 'test-post' || postId === 'pDdGSv9wkeTbLqw6VHOD';
+
   // Fetch comments
   useEffect(() => {
     fetchComments()
@@ -26,8 +29,20 @@ export function CommentSection({ postId }: Props) {
   const fetchComments = async () => {
     try {
       console.log('Fetching comments for post:', { postId })
-      const response = await fetch(`/api/posts/${postId}/comments`)
-      
+
+      // Always use the actual postId
+      const effectivePostId = postId;
+      console.log('Using effective post ID:', effectivePostId);
+
+      // Try to fetch from MDX endpoint first (for MDX posts)
+      let response = await fetch(`/api/mdx-posts/${effectivePostId}/comments`)
+
+      // If not found (404), try the regular posts endpoint
+      if (response.status === 404) {
+        console.log('Post not found in MDX posts, trying regular posts API')
+        response = await fetch(`/api/posts/${effectivePostId}/comments`)
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
@@ -35,7 +50,7 @@ export function CommentSection({ postId }: Props) {
 
       const data = await response.json()
       console.log('Fetched comments:', { count: data.length })
-      
+
       if (Array.isArray(data)) {
         setComments(data)
       } else {
@@ -55,7 +70,11 @@ export function CommentSection({ postId }: Props) {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments`, {
+      // Always use the actual postId
+      const effectivePostId = postId;
+
+      // First try posting to MDX endpoint
+      let response = await fetch(`/api/mdx-posts/${effectivePostId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,6 +90,27 @@ export function CommentSection({ postId }: Props) {
           },
         }),
       })
+
+      // If 404, fallback to the regular posts endpoint
+      if (response.status === 404) {
+        console.log('Post not found in MDX posts, trying regular posts API for comment creation')
+        response = await fetch(`/api/posts/${effectivePostId}/comments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await user.getIdToken()}`
+          },
+          body: JSON.stringify({
+            content,
+            postId,
+            author: {
+              name: user.displayName || 'Anonymous',
+              email: user.email,
+              image: user.photoURL,
+            },
+          }),
+        })
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -90,7 +130,11 @@ export function CommentSection({ postId }: Props) {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments/${parentId}/replies`, {
+      // Always use the actual postId
+      const effectivePostId = postId;
+
+      // First try posting to MDX endpoint
+      let response = await fetch(`/api/mdx-posts/${effectivePostId}/comments/${parentId}/replies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,13 +151,34 @@ export function CommentSection({ postId }: Props) {
         }),
       })
 
+      // If 404, fallback to the regular posts endpoint
+      if (response.status === 404) {
+        console.log('Post not found in MDX posts, trying regular posts API for reply creation')
+        response = await fetch(`/api/posts/${effectivePostId}/comments/${parentId}/replies`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await user.getIdToken()}`
+          },
+          body: JSON.stringify({
+            content,
+            postId,
+            author: {
+              name: user.displayName || 'Anonymous',
+              email: user.email,
+              image: user.photoURL,
+            },
+          }),
+        })
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
 
       const newReply = await response.json()
-      setComments(prev => prev.map(comment => 
+      setComments(prev => prev.map(comment =>
         comment.id === parentId ? {
           ...comment,
           replies: [...(comment.replies || []), newReply]
@@ -130,7 +195,11 @@ export function CommentSection({ postId }: Props) {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+      // Always use the actual postId
+      const effectivePostId = postId;
+
+      // First try MDX endpoint
+      let response = await fetch(`/api/mdx-posts/${effectivePostId}/comments/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -139,6 +208,19 @@ export function CommentSection({ postId }: Props) {
         body: JSON.stringify({ content, postId }),
       })
 
+      // If 404, fallback to regular posts endpoint
+      if (response.status === 404) {
+        console.log('Post not found in MDX posts, trying regular posts API for edit')
+        response = await fetch(`/api/posts/${effectivePostId}/comments/${commentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await user.getIdToken()}`
+          },
+          body: JSON.stringify({ content, postId }),
+        })
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
@@ -146,7 +228,7 @@ export function CommentSection({ postId }: Props) {
 
       const { success } = await response.json()
       if (success) {
-        setComments(prev => prev.map(comment => 
+        setComments(prev => prev.map(comment =>
           comment.id === commentId ? {
             ...comment,
             content,
@@ -165,13 +247,29 @@ export function CommentSection({ postId }: Props) {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+      // Always use the actual postId
+      const effectivePostId = postId;
+
+      // First try MDX endpoint
+      let response = await fetch(`/api/mdx-posts/${effectivePostId}/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await user.getIdToken()}`
         }
       })
+
+      // If 404, fallback to regular posts endpoint
+      if (response.status === 404) {
+        console.log('Post not found in MDX posts, trying regular posts API for delete')
+        response = await fetch(`/api/posts/${effectivePostId}/comments/${commentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await user.getIdToken()}`
+          }
+        })
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -233,7 +331,7 @@ export function CommentSection({ postId }: Props) {
       </div>
 
       {user ? (
-        <CommentForm onSubmit={addComment} submitLabel="Comment" />
+        <CommentForm postId={postId} onSubmit={addComment} submitLabel="Comment" />
       ) : (
         <p className="text-center py-4 text-gray-600 dark:text-gray-400">
           Please sign in to comment

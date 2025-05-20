@@ -22,7 +22,8 @@ import { getAuth } from 'firebase/auth'
 import { calculateReadTime } from '@/utils/read-time'
 import type { BlogPost, Author } from '@/types/blog'
 
-const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
+// Use environment variable for admin email
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 
 // Export the imported type for convenience
 export type { BlogPost, Author }
@@ -207,31 +208,44 @@ export async function getPost(id: string): Promise<BlogPost | null> {
   }
 }
 
-export async function getAllPosts(publishedOnly = true): Promise<BlogPost[]> {
+import { PaginationParams, PaginationResult, DEFAULT_PAGINATION, paginateArray } from './pagination';
+
+/**
+ * Get all blog posts with pagination support
+ */
+export async function getAllPosts(
+  options: {
+    publishedOnly?: boolean,
+    pagination?: PaginationParams
+  } = {}
+): Promise<PaginationResult<BlogPost>> {
   try {
     if (!db) {
       throw new Error('Firestore is not initialized')
     }
 
-    // Using a simpler query approach to avoid index issues
-    const postsRef = collection(db, COLLECTION_NAME)
-    let querySnapshot;
+    const { publishedOnly = true, pagination = DEFAULT_PAGINATION } = options;
 
-    // Get all posts without complex queries
-    const q = query(postsRef);
-    querySnapshot = await getDocs(q);
+    const postsRef = collection(db, COLLECTION_NAME);
+    let q = query(postsRef);
 
-    // Process the results in memory
+    // Note: Firestore requires composite indexes for queries with multiple conditions
+    // For now, we'll use a simpler approach to avoid index errors
+
+    // Start with a simple query - just sort by date
+    q = query(postsRef, orderBy('date', pagination.orderDirection || 'desc'));
+
+    // Execute the query
+    const querySnapshot = await getDocs(q);
     let allPosts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
 
-    // Filter and sort in memory
+    // If we need to filter for published posts, do it in memory
     if (publishedOnly) {
       allPosts = allPosts.filter(post => post.published);
     }
 
-    // Sort by date descending
-    return allPosts.sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Apply pagination
+    return paginateArray(allPosts, pagination);
   } catch (error) {
     console.error('Error getting posts:', error)
     throw new BlogError(
@@ -247,27 +261,29 @@ export async function getPostBySlug(slug: string, includeDrafts = false): Promis
       throw new Error('Firestore is not initialized')
     }
 
-    let q = query(
+    // Use a simple query without composite indexes
+    const q = query(
       collection(db, COLLECTION_NAME),
-      where('slug', '==', slug),
-      limit(1)
-    )
+      where('slug', '==', slug)
+    );
 
-    if (!includeDrafts) {
-      q = query(
-        q,
-        where('published', '==', true)
-      )
-    }
+    const querySnapshot = await getDocs(q);
 
-    const querySnapshot = await getDocs(q)
-
+    // Process results in memory
     if (querySnapshot.empty) {
-      return null
+      return null;
     }
 
-    const doc = querySnapshot.docs[0]
-    return convertPost(doc.id, doc.data())
+    // Filter for published status in memory if needed
+    const docs = querySnapshot.docs;
+    for (const doc of docs) {
+      const post = convertPost(doc.id, doc.data());
+      if (includeDrafts || post.published) {
+        return post;
+      }
+    }
+
+    return null;
   } catch (error) {
     console.error('Error getting post by slug:', error)
     throw new BlogError(
@@ -283,15 +299,21 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
       throw new Error('Firestore is not initialized')
     }
 
+    // Use a simpler query to avoid composite index requirements
     const q = query(
       collection(db, COLLECTION_NAME),
-      where('tags', 'array-contains', tag),
-      where('published', '==', true),
-      orderBy('date', 'desc')
-    )
+      where('tags', 'array-contains', tag)
+    );
 
-    const querySnapshot = await getDocs(q)
-    return querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()))
+    const querySnapshot = await getDocs(q);
+
+    // Filter and sort in memory
+    const posts = querySnapshot.docs
+      .map(doc => convertPost(doc.id, doc.data()))
+      .filter(post => post.published)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return posts;
   } catch (error) {
     console.error('Error getting posts by tag:', error)
     throw new BlogError(

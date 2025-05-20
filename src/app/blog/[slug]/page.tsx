@@ -1,4 +1,6 @@
 import { getPostBySlug } from "@/lib/blog";
+import { getMdxPostBySlug, mdxPostExists } from "@/lib/blog-mdx";
+import logger from "@/lib/logger";
 import BlogPostClient from "./client";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -22,10 +24,23 @@ export async function generateMetadata({
   }
 
   try {
-    const post = await getPostBySlug(slug);
+    // First try to get the post from MDX content
+    let post = null;
+
+    // Check if an MDX file exists for this slug
+    if (await mdxPostExists(slug)) {
+      post = await getMdxPostBySlug(slug);
+      logger.info("Post found in MDX content", { slug });
+    }
+
+    // If not found in MDX, try to get from Firestore
+    if (!post) {
+      post = await getPostBySlug(slug);
+      logger.info("Post found in Firestore", { slug });
+    }
 
     if (!post) {
-      console.log("Post not found for metadata:", slug);
+      logger.warn("Post not found for metadata:", { slug });
       return { title: "Post Not Found" };
     }
 
@@ -58,10 +73,23 @@ export default async function BlogPost({
   }
 
   try {
-    const post = await getPostBySlug(slug);
+    // First try to get the post from MDX content
+    let post = null;
+
+    // Check if an MDX file exists for this slug
+    if (await mdxPostExists(slug)) {
+      post = await getMdxPostBySlug(slug);
+      logger.info("Post found in MDX content", { slug });
+    }
+
+    // If not found in MDX, try to get from Firestore
+    if (!post) {
+      post = await getPostBySlug(slug);
+      logger.info("Post found in Firestore", { slug });
+    }
 
     if (!post) {
-      console.error("Post not found for slug:", slug);
+      logger.error("Post not found for slug:", { slug });
       notFound();
     }
 
