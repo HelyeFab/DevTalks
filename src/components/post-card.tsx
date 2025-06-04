@@ -2,10 +2,15 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import type { BlogPost } from '@/types/blog'
 import { Clock } from 'lucide-react'
 import { formatReadTime } from '@/utils/read-time'
+
+// Helper function to strip HTML tags from text
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim()
+}
 
 interface Props {
   post: BlogPost
@@ -18,16 +23,16 @@ export function PostCard({ post }: Props) {
     router.push(`/blog/${post.slug}`)
   }
 
-  // Format date safely
-  const formattedDate = post.date ? format(new Date(post.date), 'MMMM d, yyyy') : 'No date'
-  
+  // Format date safely to avoid hydration issues
+  const formattedDate = post.date ? format(parseISO(post.date), 'MMMM d, yyyy') : 'No date'
+
   // Get the full URL for sharing
-  const postUrl = typeof window !== 'undefined' 
+  const postUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/blog/${post.slug}`
     : `/blog/${post.slug}`
 
   return (
-    <article 
+    <article
       onClick={handleCardClick}
       className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer h-48"
     >
@@ -55,7 +60,7 @@ export function PostCard({ post }: Props) {
               {post.title}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-              {post.excerpt}
+              {post.excerpt ? stripHtmlTags(post.excerpt) : ''}
             </p>
             <div className="flex flex-wrap gap-1 mb-2">
               {post.tags.slice(0, 2).map((tag) => (

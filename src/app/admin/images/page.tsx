@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { format, parseISO } from 'date-fns'
 import { useAuth } from '@/contexts/auth-context'
 import { ImageMetadata, listImages, deleteImage } from '@/lib/storage'
 import { getAllPosts } from '@/lib/blog'
@@ -33,8 +34,8 @@ export default function ImagesPage() {
         setError(null)
 
         // Get all posts to check which images are in use
-        const posts = await getAllPosts(false) // Include drafts
-        const usedImageUrls = new Set(posts.map(post => post.image).filter(Boolean))
+        const result = await getAllPosts({ publishedOnly: false }) // Include drafts
+        const usedImageUrls = new Set(result.items.map(post => post.image).filter(Boolean) as string[])
         setUsedImages(usedImageUrls)
 
         // Get all images from storage
@@ -136,15 +137,15 @@ export default function ImagesPage() {
                   className="object-cover rounded-lg"
                 />
               </div>
-              
+
               <div className="p-4 space-y-2">
                 <p className="text-sm font-medium truncate" title={image.originalName}>
                   {image.originalName || image.name}
                 </p>
-                
+
                 <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                   <span>{(image.size / 1024).toFixed(1)} KB</span>
-                  <span>{new Date(image.timeCreated).toLocaleDateString()}</span>
+                  <span>{format(parseISO(image.timeCreated), 'MMM dd, yyyy')}</span>
                 </div>
 
                 {image.altText && (

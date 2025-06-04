@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { useAuth } from '@/contexts/auth-context'
 import { PenSquare, Trash2, Eye } from 'lucide-react'
 import { getAllPosts, deletePost, updatePost, type BlogPost } from '@/lib/blog'
@@ -30,12 +30,13 @@ export default function PostsList() {
     async function fetchPosts() {
       try {
         console.log('Fetching all posts including drafts...')
-        const fetchedPosts = await getAllPosts(false) // Get all posts, including drafts
-        console.log('Fetched posts:', fetchedPosts)
-        setPosts(fetchedPosts)
+        const result = await getAllPosts({ publishedOnly: false }) // Get all posts, including drafts
+        console.log('Fetched posts:', result)
+        setPosts(Array.isArray(result.items) ? result.items : [])
       } catch (error) {
         console.error('Error fetching posts:', error)
         setError('Failed to load posts')
+        setPosts([]) // Ensure posts is always an array
       } finally {
         setIsLoading(false)
       }
@@ -51,16 +52,14 @@ export default function PostsList() {
 
     try {
       const newStatus = !post.published
-      await updatePost(post.id, { 
+      const updatedPost = {
+        ...post,
         published: newStatus,
-        publishedAt: newStatus ? new Date().toISOString() : null
-      })
-      setPosts(posts.map(p => 
-        p.id === post.id ? { 
-          ...p, 
-          published: newStatus,
-          publishedAt: newStatus ? new Date().toISOString() : null
-        } : p
+        publishedAt: newStatus ? new Date().toISOString() : undefined
+      }
+      await updatePost(updatedPost)
+      setPosts(posts.map(p =>
+        p.id === post.id ? updatedPost : p
       ))
     } catch (error) {
       console.error('Error updating post:', error)
@@ -151,7 +150,7 @@ export default function PostsList() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {posts.map((post) => (
+              {Array.isArray(posts) && posts.length > 0 ? posts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4">
                     <div>
@@ -165,7 +164,7 @@ export default function PostsList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-white">
-                      {new Date(post.date).toLocaleDateString()}
+                      {format(parseISO(post.date), 'MMM dd, yyyy')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -220,7 +219,13 @@ export default function PostsList() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                    {isLoading ? 'Loading posts...' : 'No posts found'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

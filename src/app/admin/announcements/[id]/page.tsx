@@ -1,20 +1,21 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
 import { getAnnouncement, updateAnnouncement, type Announcement } from '@/lib/announcements'
 import { format } from 'date-fns'
 
-export default function EditAnnouncement({ params }: { params: { id: string } }) {
+export default function EditAnnouncement() {
   const router = useRouter()
+  const params = useParams()
   const { user, loading, isAdmin } = useAuth()
   const [announcement, setAnnouncement] = useState<Announcement | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const id = use(params).id
+  const id = params.id as string
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -59,7 +60,7 @@ export default function EditAnnouncement({ params }: { params: { id: string } })
       startDate: formData.get('startDate') as string,
       endDate: (formData.get('endDate') as string) || undefined,
       published: formData.get('published') === 'true',
-      publishedAt: formData.get('published') === 'true' 
+      publishedAt: formData.get('published') === 'true'
         ? announcement.publishedAt || new Date().toISOString()
         : undefined,
     }

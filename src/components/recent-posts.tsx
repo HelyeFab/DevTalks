@@ -3,8 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Clock, Heart } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
 import type { BlogPost } from '@/types/blog'
 import { clsx } from 'clsx'
+
+// Helper function to strip HTML tags from text
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim()
+}
 
 interface RecentPostsProps {
   posts: BlogPost[]
@@ -66,11 +72,11 @@ export function RecentPosts({ posts }: RecentPostsProps) {
                 {post.title}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
-                {post.excerpt}
+                {post.excerpt ? stripHtmlTags(post.excerpt) : ''}
               </p>
               <div className="flex items-center justify-between">
                 <time className="text-xs text-gray-500 dark:text-gray-500">
-                  {new Date(post.date).toLocaleDateString()}
+                  {format(parseISO(post.date), 'MMM dd, yyyy')}
                 </time>
                 {activeTab === 'liked' && (
                   <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1">

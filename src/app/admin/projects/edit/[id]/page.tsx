@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { getProject, updateProject } from '@/lib/projects'
 import { Project } from '@/types/project'
@@ -36,17 +36,9 @@ interface Technology {
   name: string
 }
 
-import { use } from 'react'
-
-interface EditProjectPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
-
-export default function EditProjectPage({ params }: EditProjectPageProps) {
-  const resolvedParams = use(params)
-  const projectId = resolvedParams.id
+export default function EditProjectPage() {
+  const params = useParams()
+  const projectId = params.id as string
   const { user, loading, isAdmin } = useAuth()
   const router = useRouter()
   const [project, setProject] = useState<Project | null>(null)

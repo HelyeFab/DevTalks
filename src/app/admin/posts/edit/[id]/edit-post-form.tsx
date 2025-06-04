@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic'
 import '@uiw/react-md-editor/markdown-editor.css'
 import '@uiw/react-markdown-preview/markdown.css'
 import { ImagePicker } from '@/components/image-picker'
+import { Eye, Edit, Code } from 'lucide-react'
 
 const MDEditor = dynamic(
   () => import('@uiw/react-md-editor').then((mod) => mod.default),
@@ -22,6 +23,8 @@ interface Tag {
 interface Props {
   post: BlogPost
 }
+
+type EditorMode = 'edit' | 'live' | 'preview'
 
 export function EditPostForm({ post: initialPost }: Props) {
   const { user, loading, isAdmin } = useAuth()
@@ -38,6 +41,7 @@ export function EditPostForm({ post: initialPost }: Props) {
   const [published, setPublished] = useState(initialPost.published)
   const [image, setImage] = useState(initialPost.image || '')
   const [imageAlt, setImageAlt] = useState(initialPost.imageAlt || '')
+  const [editorMode, setEditorMode] = useState<EditorMode>('live')
 
   const handleAddTag = () => {
     if (!tagInput.trim()) return
@@ -65,6 +69,19 @@ export function EditPostForm({ post: initialPost }: Props) {
     }
   }
 
+  // Helper function to create clean excerpt from content
+  const createExcerpt = (content: string): string => {
+    // Strip HTML tags and clean up the text
+    const cleanText = content
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&[^;]+;/g, ' ') // Replace HTML entities with spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim()
+
+    // Return first 150 characters with ellipsis if needed
+    return cleanText.length > 150 ? cleanText.slice(0, 150) + '...' : cleanText
+  }
+
   const handleSave = async (publish = false) => {
     if (!title) {
       setError('Title is required')
@@ -90,14 +107,14 @@ export function EditPostForm({ post: initialPost }: Props) {
         title,
         subtitle,
         content,
-        excerpt: content.slice(0, 150) + '...',
+        excerpt: createExcerpt(content),
         tags: tags.map(tag => tag.name),
         image,
         imageAlt,
         author: {
-          name: user?.name || 'Admin',
+          name: user?.displayName || 'Admin',
           email: user?.email!,
-          image: user?.image || '/images/default-avatar.png'
+          image: user?.photoURL || '/images/default-avatar.png'
         },
         date: initialPost.date,
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
@@ -221,15 +238,73 @@ export function EditPostForm({ post: initialPost }: Props) {
 
         {/* Content */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Content
-          </label>
-          <MDEditor
-            value={content}
-            onChange={(value) => setContent(value || '')}
-            preview="edit"
-            height={500}
-          />
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Content
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Editor Mode:</span>
+              <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode('edit')}
+                  className={`px-3 py-1 text-xs font-medium flex items-center gap-1 ${
+                    editorMode === 'edit'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode('live')}
+                  className={`px-3 py-1 text-xs font-medium flex items-center gap-1 ${
+                    editorMode === 'live'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Code className="h-3 w-3" />
+                  Live
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode('preview')}
+                  className={`px-3 py-1 text-xs font-medium flex items-center gap-1 ${
+                    editorMode === 'preview'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Eye className="h-3 w-3" />
+                  Preview
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+            <MDEditor
+              value={content}
+              onChange={(value) => setContent(value || '')}
+              preview={editorMode}
+              height={500}
+              visibleDragbar={false}
+            />
+          </div>
+
+          <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li><strong>Edit mode:</strong> Raw markdown/HTML editing only</li>
+              <li><strong>Live mode:</strong> Split view with editor and live preview</li>
+              <li><strong>Preview mode:</strong> Full preview of rendered content</li>
+              <li>You can use HTML tags like <code>&lt;p&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;ul&gt;</code>, etc.</li>
+              <li>Markdown syntax like <code>**bold**</code>, <code>*italic*</code>, <code># headers</code> also works</li>
+            </ul>
+          </div>
         </div>
 
         {/* Actions */}
