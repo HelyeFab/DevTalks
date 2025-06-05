@@ -25,15 +25,16 @@ const COMPRESSION_OPTIONS = {
   useWebWorker: true,
 }
 
-export function ImagePicker({ 
-  onImageSelected, 
-  currentImage, 
-  currentAlt = '', 
-  className = '' 
+export function ImagePicker({
+  onImageSelected,
+  currentImage,
+  currentAlt = '',
+  className = ''
 }: ImagePickerProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState(currentImage)
+  const [actualImageUrl, setActualImageUrl] = useState(currentImage)
   const [error, setError] = useState<string | null>(null)
   const [altText, setAltText] = useState(currentAlt)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -44,7 +45,7 @@ export function ImagePicker({
       img.onload = () => {
         URL.revokeObjectURL(img.src)
         resolve(
-          img.width >= MIN_DIMENSIONS.width && 
+          img.width >= MIN_DIMENSIONS.width &&
           img.height >= MIN_DIMENSIONS.height
         )
       }
@@ -122,7 +123,7 @@ export function ImagePicker({
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '')
       const uniqueFilename = `${timestamp}-${sanitizedName}`
       const fullPath = `${STORAGE_PATH}/${uniqueFilename}`
-      
+
       console.log('Preparing upload:', {
         path: fullPath,
         sanitizedName,
@@ -163,11 +164,13 @@ export function ImagePicker({
         path: fullPath
       })
 
+      // Store the actual Firebase URL separately from the preview
+      setActualImageUrl(downloadUrl)
       onImageSelected(downloadUrl, altText)
     } catch (error) {
       console.error('Detailed upload error:', error)
-      setError(error instanceof Error 
-        ? `Upload failed: ${error.message}` 
+      setError(error instanceof Error
+        ? `Upload failed: ${error.message}`
         : 'Failed to upload image. Please try again.'
       )
       if (fileInputRef.current) {
@@ -186,6 +189,7 @@ export function ImagePicker({
 
   const handleRemove = () => {
     setPreviewUrl(undefined)
+    setActualImageUrl(undefined)
     setError(null)
     setAltText('')
     onImageSelected('', '')
@@ -197,8 +201,9 @@ export function ImagePicker({
   const handleAltTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAltText = e.target.value
     setAltText(newAltText)
-    if (previewUrl) {
-      onImageSelected(previewUrl, newAltText)
+    // Only call onImageSelected if we have an actual Firebase URL, not a preview data URL
+    if (actualImageUrl) {
+      onImageSelected(actualImageUrl, newAltText)
     }
   }
 
@@ -274,7 +279,7 @@ export function ImagePicker({
           {isUploading && (
             <div className="w-full max-w-xs mt-2">
               <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                <div 
+                <div
                   className="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                   role="progressbar"

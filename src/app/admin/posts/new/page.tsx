@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { createPost } from '@/lib/blog'
 import dynamic from 'next/dynamic'
 import { ImagePicker } from '@/components/image-picker'
+import { DatePicker } from '@/components/date-picker'
 import { Modal } from '@/components/modal'
 import { AlertTriangle, Eye, Edit, Code } from 'lucide-react'
 
@@ -53,6 +54,7 @@ export default function NewPost() {
   const [errorMessage, setErrorMessage] = useState('')
   const [editorMounted, setEditorMounted] = useState(false)
   const [editorMode, setEditorMode] = useState<EditorMode>('live')
+  const [postDate, setPostDate] = useState(new Date().toISOString())
 
   useEffect(() => {
     setEditorMounted(true)
@@ -142,7 +144,7 @@ export default function NewPost() {
           email: user.email!,
           image: user.photoURL || '/images/default-avatar.png'
         },
-        date: new Date().toISOString(),
+        date: postDate,
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         published: publish,
         image,
@@ -162,7 +164,7 @@ export default function NewPost() {
           email: user.email!,
           image: user.photoURL || '/images/default-avatar.png'
         },
-        date: new Date().toISOString(),
+        date: postDate,
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         published: publish
       }
@@ -269,6 +271,13 @@ export default function NewPost() {
             placeholder="Enter tags (press Enter to add)"
           />
         </div>
+
+        {/* Date */}
+        <DatePicker
+          value={postDate}
+          onChange={setPostDate}
+          label="Publication Date"
+        />
 
         {/* Content */}
         <div>

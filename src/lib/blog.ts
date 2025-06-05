@@ -68,8 +68,8 @@ function convertPost(id: string, data: DocumentData): BlogPost {
     subtitle: String(data.subtitle || ''),
     content: String(data.content || ''),
     excerpt: data.excerpt ? String(data.excerpt) : undefined,
-    image: data.image ? String(data.image) : undefined,
-    imageAlt: data.imageAlt ? String(data.imageAlt) : undefined,
+    image: data.image !== undefined && data.image !== null ? String(data.image) : undefined,
+    imageAlt: data.imageAlt !== undefined && data.imageAlt !== null ? String(data.imageAlt) : undefined,
     tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
     author,
     date,
@@ -152,12 +152,14 @@ export async function updatePost(post: BlogPost): Promise<BlogPost> {
       throw new Error('Post ID is required')
     }
 
+    // Create update data without the id field
+    const { id, ...updateData } = post
+
     const docRef = doc(db, COLLECTION_NAME, post.id)
     await updateDoc(docRef, {
-      ...post,
+      ...updateData,
       updatedAt: new Date().toISOString(),
     })
-
     return post
   } catch (error) {
     console.error('Error updating post:', error)

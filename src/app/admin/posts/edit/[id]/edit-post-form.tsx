@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic'
 import '@uiw/react-md-editor/markdown-editor.css'
 import '@uiw/react-markdown-preview/markdown.css'
 import { ImagePicker } from '@/components/image-picker'
+import { DatePicker } from '@/components/date-picker'
 import { Eye, Edit, Code } from 'lucide-react'
 
 const MDEditor = dynamic(
@@ -42,6 +43,7 @@ export function EditPostForm({ post: initialPost }: Props) {
   const [image, setImage] = useState(initialPost.image || '')
   const [imageAlt, setImageAlt] = useState(initialPost.imageAlt || '')
   const [editorMode, setEditorMode] = useState<EditorMode>('live')
+  const [postDate, setPostDate] = useState(initialPost.date)
 
   const handleAddTag = () => {
     if (!tagInput.trim()) return
@@ -95,12 +97,6 @@ export function EditPostForm({ post: initialPost }: Props) {
 
     try {
       setSaving(true)
-      console.log('Updating post:', {
-        id: initialPost.id,
-        title,
-        published: publish,
-        tags: tags.map(tag => tag.name)
-      })
 
       const post: BlogPost = {
         id: initialPost.id,
@@ -116,13 +112,12 @@ export function EditPostForm({ post: initialPost }: Props) {
           email: user?.email!,
           image: user?.photoURL || '/images/default-avatar.png'
         },
-        date: initialPost.date,
+        date: postDate,
         slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         published: publish
       }
 
       await updatePost(post)
-      console.log('Post updated successfully')
       router.push('/admin/posts')
     } catch (error) {
       console.error('Error updating post:', error)
@@ -235,6 +230,13 @@ export function EditPostForm({ post: initialPost }: Props) {
             placeholder="Add a tag and press Enter"
           />
         </div>
+
+        {/* Date */}
+        <DatePicker
+          value={postDate}
+          onChange={setPostDate}
+          label="Publication Date"
+        />
 
         {/* Content */}
         <div>
