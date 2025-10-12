@@ -1,0 +1,16 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy DevTalks app
+    runs-on: self-hosted
+    
+    steps:
+      - name: Deploy DevTalks
+        run: |
+          /home/sheldon/scripts/deploy-app.sh devtalks
