@@ -49,7 +49,7 @@ export function ColorPaletteSelector() {
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-80 bg-popover rounded-xl shadow-lg py-4 px-4 z-50 ring-1 ring-border">
+          <div className="absolute right-0 mt-2 w-72 bg-popover rounded-xl shadow-lg py-4 px-4 z-50 ring-1 ring-border">
             <h3 className="text-sm font-semibold text-popover-foreground mb-3">
               Choose Theme
             </h3>
