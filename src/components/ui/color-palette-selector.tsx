@@ -53,7 +53,7 @@ export function ColorPaletteSelector() {
             <h3 className="text-sm font-semibold text-popover-foreground mb-3">
               Choose Theme
             </h3>
-            <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+            <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-hide">
               {paletteList.map((item) => (
                 <button
                   key={item.name}
