@@ -219,3 +219,70 @@ code.hljs {
   background-size: 200px 200px;
   background-repeat: repeat;
 }
+
+/* Prose typography theme-aware styles */
+.prose {
+  color: var(--foreground);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--foreground);
+}
+
+.prose p,
+.prose li {
+  color: var(--foreground);
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: var(--primary-hover);
+}
+
+.prose strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.prose code {
+  color: var(--foreground);
+  background-color: var(--secondary);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background-color: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+.prose blockquote {
+  border-left-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+.prose hr {
+  border-color: var(--border);
+}
+
+.prose table {
+  color: var(--foreground);
+}
+
+.prose thead {
+  border-bottom-color: var(--border);
+}
+
+.prose tbody tr {
+  border-bottom-color: var(--border);
+}

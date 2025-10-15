@@ -98,17 +98,17 @@ export default function BlogPostClient({ post }: Props) {
       <div className="mb-8">
         <Link
           href="/"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Blog Posts
         </Link>
       </div>
 
-      <article className="prose dark:prose-invert max-w-none">
+      <article className="prose max-w-none">
         <header className="not-prose mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 flex-wrap">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-2">
               <Image
                 src={post.author.image || DEFAULT_AVATAR}
@@ -132,13 +132,13 @@ export default function BlogPostClient({ post }: Props) {
             <UpvoteButton postId={post.id} initialUpvotes={post.upvotes || 0} />
             <button
               onClick={() => setIsShareModalOpen(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent transition-colors"
               aria-label="Share post"
             >
               <Share2 className="h-4 w-4" />
             </button>
             {!post.published && (
-              <span className={clsx("px-2 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20 rounded-full")}>
+              <span className="px-2 py-1 text-xs font-medium text-destructive-foreground bg-destructive rounded-full">
                 Draft
               </span>
             )}
@@ -160,7 +160,7 @@ export default function BlogPostClient({ post }: Props) {
           </div>
         )}
 
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="prose max-w-none text-foreground">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
@@ -188,19 +188,19 @@ export default function BlogPostClient({ post }: Props) {
         </div>
       </article>
 
-      <div className="my-16 border-t border-gray-100 dark:border-gray-800 pt-16">
+      <div className="my-16 border-t border-border pt-16">
         <CommentSection postId={post.id} />
       </div>
 
       {/* Share Modal */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setIsShareModalOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-popover rounded-lg p-6 max-w-sm w-full mx-4 border border-border" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Share Post</h2>
+              <h2 className="text-xl font-bold text-popover-foreground">Share Post</h2>
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <span className="sr-only">Close</span>
                 ×
@@ -213,7 +213,7 @@ export default function BlogPostClient({ post }: Props) {
                   <button
                     key={option.name}
                     onClick={option.onClick}
-                    className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-3 p-3 text-left text-popover-foreground hover:bg-accent rounded-lg transition-colors"
                   >
                     <Icon className="h-5 w-5" />
                     <span>{option.name}</span>
