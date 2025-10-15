@@ -6,7 +6,7 @@ import { withAuth, createErrorResponse } from '@/lib/auth-middleware'
 export const dynamic = 'force-dynamic'
 
 type RouteContext = {
-  params: { postId: string; commentId: string }
+  params: Promise<{ postId: string; commentId: string }>
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {

@@ -6,19 +6,18 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   updateProfile,
-  signInWithEmailAndPassword,
-  getAuth
+  signInWithEmailAndPassword
 } from 'firebase/auth'
 
 export const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 export const DEFAULT_AVATAR = '/images/default-avatar.svg'
 
-export async function getAuth() {
+export async function getCurrentAuth() {
   return new Promise((resolve) => {
     // Wait for auth state to be ready
     const unsubscribe = auth.onAuthStateChanged((user) => {
       unsubscribe() // Unsubscribe immediately
-      
+
       if (!user) {
         resolve(null)
         return
@@ -38,7 +37,6 @@ export async function getAuth() {
 
 export async function signInWithGoogle() {
   try {
-    const auth = getAuth()
     const provider = new GoogleAuthProvider()
     const result = await signInWithPopup(auth, provider)
     return result.user
@@ -50,7 +48,6 @@ export async function signInWithGoogle() {
 
 export async function signIn(email: string, password: string) {
   try {
-    const auth = getAuth()
     const result = await signInWithEmailAndPassword(auth, email, password)
     return result.user
   } catch (error) {
@@ -61,7 +58,6 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(email: string, password: string, name: string) {
   try {
-    const auth = getAuth()
     const result = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(result.user, {
       displayName: name,
@@ -75,7 +71,6 @@ export async function signUp(email: string, password: string, name: string) {
 
 export async function signOut() {
   try {
-    const auth = getAuth()
     await firebaseSignOut(auth)
   } catch (error) {
     console.error('Error signing out:', error)

@@ -6,7 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore'
 export const dynamic = 'force-dynamic'
 
 type RouteContext = {
-  params: { commentId: string }
+  params: Promise<{ commentId: string }>
 }
 
 async function isAdmin(uid: string): Promise<boolean> {
@@ -24,8 +24,8 @@ async function isAdmin(uid: string): Promise<boolean> {
 export async function PUT(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comment update ---')
   try {
-    const resolvedContext = await context;
-    const commentId = resolvedContext.params.commentId
+    const params = await context.params
+    const commentId = params.commentId
     console.log('Updating comment:', { commentId })
 
     // Get authorization header
@@ -88,8 +88,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   console.log('\n--- Starting comment deletion ---')
   try {
-    const resolvedContext = await context;
-    const commentId = resolvedContext.params.commentId
+    const params = await context.params
+    const commentId = params.commentId
     console.log('Deleting comment:', { commentId })
 
     // Get authorization header

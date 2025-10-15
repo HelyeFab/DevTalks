@@ -25,16 +25,8 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       return data as UserProfile
     }
 
-    console.log('Profile does not exist, creating default profile')
-    const defaultProfile: UserProfile = {
-      bio: '',
-      socialLinks: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    await setDoc(docRef, defaultProfile)
-    return defaultProfile
+    console.log('Profile does not exist')
+    return null
 
   } catch (error) {
     console.error('Error fetching profile:', error)
@@ -45,7 +37,7 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
   }
 }
 
-export async function createProfile(userId: string, data: Partial<UserProfile>): Promise<void> {
+export async function createProfile(userId: string, data: Partial<UserProfile> & { email: string; name: string }): Promise<void> {
   if (!userId) {
     throw new Error('No userId provided to createProfile')
   }
@@ -54,6 +46,8 @@ export async function createProfile(userId: string, data: Partial<UserProfile>):
 
   try {
     const profile: UserProfile = {
+      email: data.email,
+      name: data.name,
       bio: data.bio || '',
       socialLinks: data.socialLinks || {},
       createdAt: new Date().toISOString(),
@@ -82,9 +76,8 @@ export async function updateProfile(userId: string, data: Partial<UserProfile>):
     const docSnap = await getDoc(docRef)
 
     if (!docSnap.exists()) {
-      console.log('Profile does not exist, creating new profile')
-      await createProfile(userId, data)
-      return
+      console.log('Profile does not exist, cannot update')
+      throw new Error('Profile does not exist')
     }
 
     console.log('Updating existing profile')

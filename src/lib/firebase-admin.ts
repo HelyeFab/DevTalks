@@ -230,6 +230,32 @@ const mockDb = {
             })
           };
         },
+        orderBy: (field: string, direction: 'asc' | 'desc' = 'asc') => ({
+          get: async () => {
+            const docs = Array.from(collectionData.entries())
+              .map(([id, data]) => ({
+                id,
+                data: () => data,
+                exists: true
+              }))
+              .sort((a, b) => {
+                const aVal = a.data()[field];
+                const bVal = b.data()[field];
+                if (direction === 'asc') {
+                  return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                  return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+              });
+
+            return {
+              empty: docs.length === 0,
+              size: docs.length,
+              docs,
+              forEach: (callback: (doc: any) => void) => docs.forEach(callback)
+            };
+          }
+        }),
         where: (field: string, op: string, value: any) => {
           return {
             orderBy: () => ({

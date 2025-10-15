@@ -71,7 +71,7 @@ export function createApiHandler<SchemaType = any>(
 
         if (!validationResult.success) {
           logger.warn('Request validation failed', { path, method });
-          return validationResult.error;
+          return 'error' in validationResult ? validationResult.error : NextResponse.json({ error: 'Validation failed' }, { status: 400 });
         }
 
         // Add validated data to request object

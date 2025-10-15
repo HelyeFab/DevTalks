@@ -11,10 +11,10 @@ export const dynamic = 'force-dynamic'
 const DEFAULT_AVATAR = '/images/default-avatar.svg'
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     slug: string
     commentId: string
-  }
+  }>
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           commentId,
           userId: authContext.userId
         });
-        return validationResult.error;
+        return 'error' in validationResult ? validationResult.error : NextResponse.json({ error: 'Validation failed' }, { status: 400 });
       }
 
       const data = validationResult.data;
@@ -72,15 +72,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const newReply = await createComment(
         authContext.userId,
         {
-          name: data.author.name,
-          email: data.author.email,
+          name: data.author.name || '',
+          email: data.author.email || '',
           image: data.author.image || DEFAULT_AVATAR
         },
         {
-          content: data.content,
+          content: data.content || '',
           postId: slug, // Use the slug as the postId
           parentId: commentId,
-          author: data.author
+          author: {
+            name: data.author.name || '',
+            email: data.author.email || '',
+            image: data.author.image || DEFAULT_AVATAR
+          }
         }
       );
 

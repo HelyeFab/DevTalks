@@ -12,7 +12,7 @@ const { db } = initAdmin()
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   const resolvedParams = await params;
   if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string' || resolvedParams.slug === 'undefined') {
@@ -68,7 +68,7 @@ async function getAnnouncementById(id: string): Promise<Announcement | null> {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   console.log('\n--- Updating announcement ---')
   const resolvedParams = await params;
 
@@ -130,7 +130,7 @@ export async function PUT(request: NextRequest, { params }: { params: { slug: st
   }, true) // requireAdmin=true
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   console.log('\n--- Deleting announcement ---')
   const resolvedParams = await params;
 

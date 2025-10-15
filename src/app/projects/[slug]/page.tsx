@@ -7,13 +7,13 @@ import { getProjectBySlug } from '@/lib/projects'
 import { Markdown } from '@/components/markdown'
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = await Promise.resolve(params.slug)
+  const { slug } = await params
   try {
     const project = await getProjectBySlug(slug)
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProjectPage({ params }: Props) {
-  const slug = await Promise.resolve(params.slug)
+  const { slug } = await params
 
   try {
     const project = await getProjectBySlug(slug)

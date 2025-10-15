@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
-import { CreateAnnouncementData } from '@/types/announcement'
+import { Announcement } from '@/lib/announcements'
 import { initAdmin } from '@/lib/firebase-admin'
+
+type CreateAnnouncementData = Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>
 
 const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 

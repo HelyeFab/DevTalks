@@ -13,7 +13,8 @@ export default async function AboutPage() {
   // Try to get featured projects, but have a fallback in case of errors
   let featuredProjects: Array<import('@/types/project').Project> = [];
   try {
-    featuredProjects = await getAllProjects(true); // true means featured only
+    const result: any = await getAllProjects({ featuredOnly: true }); // Get featured projects
+    featuredProjects = (result.projects || result.items || result) as any;
   } catch (error) {
     console.error('Error getting projects:', error);
     // Continue with empty array if there's an error

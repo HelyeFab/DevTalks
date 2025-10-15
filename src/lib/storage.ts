@@ -56,7 +56,7 @@ export async function listImages(prefix = 'blog-images'): Promise<ImageMetadata[
     })
 
     const results = await Promise.all(metadataPromises)
-    const validResults = results.filter((item): item is ImageMetadata => item !== null)
+    const validResults = results.filter((item): item is NonNullable<typeof item> => item !== null)
     
     console.log('Successfully listed images:', validResults.length)
     return validResults

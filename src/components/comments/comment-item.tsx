@@ -155,6 +155,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
           {/* Comment text */}
           {isEditing ? (
             <CommentForm
+              postId={comment.postId}
               initialValue={comment.content}
               onSubmit={handleEdit}
               onCancel={() => setIsEditing(false)}
@@ -181,6 +182,8 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
           {isReplying && (
             <div className="mt-4">
               <CommentForm
+                postId={comment.postId}
+                parentId={comment.id}
                 onSubmit={handleReply}
                 onCancel={() => setIsReplying(false)}
                 submitLabel="Reply"

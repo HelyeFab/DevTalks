@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Markdown } from '@/components/markdown'
 
 type Props = {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

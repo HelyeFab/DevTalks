@@ -8,7 +8,7 @@ const POSTS_COLLECTION = 'blog_posts'
 const UPVOTES_COLLECTION = 'upvotes'
 
 type RouteContext = {
-  params: { postId: string }
+  params: Promise<{ postId: string }>
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {

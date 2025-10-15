@@ -25,7 +25,7 @@ export function CommentForm({
   const [content, setContent] = useState(initialValue)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { user, isLoading } = useAuth()
+  const { user, loading: isLoading } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

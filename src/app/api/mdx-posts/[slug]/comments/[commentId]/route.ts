@@ -9,10 +9,10 @@ import logger from '@/lib/logger'
 export const dynamic = 'force-dynamic'
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     slug: string
     commentId: string
-  }
+  }>
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           commentId,
           userId: authContext.userId
         });
-        return validationResult.error;
+        return 'error' in validationResult ? validationResult.error : NextResponse.json({ error: 'Validation failed' }, { status: 400 });
       }
 
       const data = validationResult.data;

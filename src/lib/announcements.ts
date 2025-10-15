@@ -20,6 +20,7 @@ export interface Announcement {
   title: string
   content: string
   pinned: boolean
+  priority?: 'low' | 'normal' | 'high' | 'urgent'
   startDate?: string | null
   endDate?: string | null
   published: boolean
@@ -42,6 +43,7 @@ const convertAnnouncement = (id: string, data: DocumentData): Announcement => {
     title: data.title,
     content: data.content,
     pinned: data.pinned,
+    priority: data.priority || 'normal',
     startDate: data.startDate,
     endDate: data.endDate,
     published: data.published,

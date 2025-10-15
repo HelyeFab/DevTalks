@@ -1,13 +1,15 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { 
-  User, 
-  onAuthStateChanged, 
+import {
+  User,
+  onAuthStateChanged,
   getAuth,
   signInWithPopup,
   GoogleAuthProvider,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  createUserWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db, auth as firebaseAuth } from '@/lib/firebase'
@@ -17,6 +19,7 @@ interface AuthContextType {
   loading: boolean
   isAdmin: boolean
   signInWithGoogle: () => Promise<void>
+  signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -25,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   signInWithGoogle: async () => {},
+  signUp: async () => {},
   signOut: async () => {}
 })
 
@@ -112,6 +116,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAdmin(isUserAdmin)
   }
 
+  const signUp = async (email: string, password: string, name: string) => {
+    if (!firebaseAuth || !db) {
+      throw new Error('Firebase auth or Firestore not initialized')
+    }
+
+    const result = await createUserWithEmailAndPassword(firebaseAuth, email, password)
+    await updateProfile(result.user, {
+      displayName: name
+    })
+
+    // Get admin email from environment collection
+    const envRef = doc(db, 'env', 'admin')
+    const envSnap = await getDoc(envRef)
+    const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
+
+    // Check if user is admin
+    const isUserAdmin = result.user.email === adminEmail
+
+    // Create user profile
+    const profileRef = doc(db, 'profiles', result.user.uid)
+    await setDoc(profileRef, {
+      email: result.user.email,
+      name: name,
+      photoURL: result.user.photoURL,
+      isAdmin: isUserAdmin,
+      createdAt: new Date().toISOString()
+    })
+
+    setIsAdmin(isUserAdmin)
+  }
+
   const signOut = async () => {
     if (!firebaseAuth) {
       throw new Error('Firebase auth not initialized')
@@ -123,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, signInWithGoogle, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import FocusLock from 'react-focus-lock'
 
 interface ModalProps {
   isOpen: boolean
@@ -48,37 +49,48 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
   if (!isOpen) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div
-        ref={modalRef}
-        className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800"
-      >
-        {title && (
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-            {title}
-          </h2>
-        )}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="presentation">
+      <FocusLock returnFocus>
+        <div
+          ref={modalRef}
+          className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? "modal-title" : undefined}
+          aria-describedby="modal-content"
         >
-          <span className="sr-only">Close</span>
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          {title && (
+            <h2 id="modal-title" className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+              {title}
+            </h2>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+            aria-label="Close dialog"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-        {children}
-      </div>
+            <span className="sr-only">Close</span>
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+          <div id="modal-content">
+            {children}
+          </div>
+        </div>
+      </FocusLock>
     </div>,
     document.body
   )

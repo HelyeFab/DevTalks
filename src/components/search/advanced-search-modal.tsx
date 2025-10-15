@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/modal'
 import { Search as SearchIcon, Loader2, Filter, X, Calendar, Tag, User } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/firebase'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore'
 import { BlogPost } from '@/types/blog'
 
 interface SearchFilters {
@@ -30,6 +30,7 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
   const [error, setError] = useState<string | null>(null)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableAuthors, setAvailableAuthors] = useState<string[]>([])
+  const [isLoadingFilters, setIsLoadingFilters] = useState(false)
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -60,9 +61,14 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
   }, [filters, isOpen])
 
   const loadFilterOptions = async () => {
+    setIsLoadingFilters(true)
     try {
       const postsRef = collection(db, 'blog_posts')
-      const q = query(postsRef, where('published', '==', true))
+      const q = query(
+        postsRef,
+        where('published', '==', true),
+        orderBy('date', 'desc')
+      )
       const querySnapshot = await getDocs(q)
 
       const tags = new Set<string>()
@@ -82,6 +88,8 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
       setAvailableAuthors(Array.from(authors).sort())
     } catch (err) {
       console.error('Error loading filter options:', err)
+    } finally {
+      setIsLoadingFilters(false)
     }
   }
 
@@ -97,7 +105,13 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
 
     try {
       const postsRef = collection(db, 'blog_posts')
-      const q = query(postsRef, where('published', '==', true))
+      // Add pagination limit of 100 posts to improve performance
+      const q = query(
+        postsRef,
+        where('published', '==', true),
+        orderBy('date', 'desc'),
+        limit(100)
+      )
       const querySnapshot = await getDocs(q)
 
       const searchResults: SearchResult[] = []
@@ -328,9 +342,10 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
                 <select
                   onChange={(e) => e.target.value && addTag(e.target.value)}
                   value=""
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  disabled={isLoadingFilters}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select a tag...</option>
+                  <option value="">{isLoadingFilters ? 'Loading tags...' : 'Select a tag...'}</option>
                   {availableTags.filter(tag => !filters.tags.includes(tag)).map(tag => (
                     <option key={tag} value={tag}>{tag}</option>
                   ))}
@@ -346,9 +361,10 @@ export function AdvancedSearchModal({ children }: { children?: React.ReactNode }
                 <select
                   value={filters.author}
                   onChange={(e) => updateFilter('author', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  disabled={isLoadingFilters}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Any author</option>
+                  <option value="">{isLoadingFilters ? 'Loading authors...' : 'Any author'}</option>
                   {availableAuthors.map(author => (
                     <option key={author} value={author}>{author}</option>
                   ))}
