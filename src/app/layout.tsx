@@ -34,8 +34,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body 
-        className={`${cabin.variable} ${lobster.variable} font-cabin m-0 antialiased min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-50`}
+      <body
+        className={`${cabin.variable} ${lobster.variable} font-cabin m-0 antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
       >
         <Providers>

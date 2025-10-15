@@ -28,16 +28,16 @@ export function RecentPosts({ posts }: RecentPostsProps) {
   const displayPosts = sortedPosts.slice(0, 3)
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+    <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
       {/* Tabs */}
-      <div className="flex items-center gap-4 mb-4 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center gap-4 mb-4 border-b border-border">
         <button
           onClick={() => setActiveTab('recent')}
           className={clsx(
             'flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative',
             activeTab === 'recent'
-              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400 -mb-px'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'text-primary border-b-2 border-primary -mb-px'
+              : 'text-muted-foreground hover:text-foreground'
           )}
         >
           <Clock className="h-4 w-4" />
@@ -48,8 +48,8 @@ export function RecentPosts({ posts }: RecentPostsProps) {
           className={clsx(
             'flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative',
             activeTab === 'liked'
-              ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400 -mb-px'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'text-primary border-b-2 border-primary -mb-px'
+              : 'text-muted-foreground hover:text-foreground'
           )}
         >
           <Heart className="h-4 w-4" />
@@ -62,24 +62,24 @@ export function RecentPosts({ posts }: RecentPostsProps) {
         {displayPosts.map((post) => (
           <div
             key={post.slug}
-            className="border-b border-gray-100 dark:border-gray-700 last:border-0 pb-3 last:pb-0"
+            className="border-b border-border last:border-0 pb-3 last:pb-0"
           >
             <Link
               href={`/blog/${post.slug}`}
               className="block group"
             >
-              <h3 className="font-medium mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+              <h3 className="font-medium mb-1 group-hover:text-primary transition-colors">
                 {post.title}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-1">
                 {post.excerpt ? stripHtmlTags(post.excerpt) : ''}
               </p>
               <div className="flex items-center justify-between">
-                <time className="text-xs text-gray-500 dark:text-gray-500">
+                <time className="text-xs text-muted-foreground">
                   {format(parseISO(post.date), 'MMM dd, yyyy')}
                 </time>
                 {activeTab === 'liked' && (
-                  <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Heart className="h-3 w-3" />
                     {post.upvotes || 0}
                   </span>

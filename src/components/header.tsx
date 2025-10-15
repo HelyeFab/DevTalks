@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, LogIn, ChevronDown } from 'lucide-react'
-import { ThemeToggle } from './theme-toggle'
+import { ColorPaletteSelector } from './ui/color-palette-selector'
 import { Modal } from './modal'
 import { clsx } from 'clsx'
 import { useAuth } from '@/contexts/auth-context'
@@ -95,7 +95,7 @@ export function Header() {
     }
 
     return (
-      <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
+      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
         {user.displayName ? getInitials(user.displayName) : 'U'}
       </div>
     )
@@ -111,17 +111,17 @@ export function Header() {
           className="flex items-center gap-2 group"
         >
           {renderUserAvatar()}
-          <span className="text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+          <span className="text-foreground group-hover:text-primary">
             {user.displayName || 'User'}
           </span>
-          <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
         </button>
 
         {showUserMenu && (
-          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg py-1 z-[100] ring-1 ring-black ring-opacity-5">
+          <div className="absolute right-0 mt-2 w-48 bg-popover rounded-lg shadow-lg py-1 z-[100] ring-1 ring-border">
             <Link
               href="/user/profile"
-              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
+              className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
               onClick={() => setShowUserMenu(false)}
             >
               Profile
@@ -129,7 +129,7 @@ export function Header() {
             {isAdmin && (
               <Link
                 href="/admin/dashboard"
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
+                className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
                 onClick={() => setShowUserMenu(false)}
               >
                 Admin Dashboard
@@ -137,7 +137,7 @@ export function Header() {
             )}
             <button
               onClick={handleSignOut}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
+              className="block w-full text-left px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
             >
               Sign Out
             </button>
@@ -151,7 +151,7 @@ export function Header() {
     if (loading) {
       return (
         <div className="flex items-center gap-4">
-          <div className="h-8 w-20 bg-gray-200 dark:bg-dark-700 rounded animate-pulse" />
+          <div className="h-8 w-20 bg-muted rounded animate-pulse" />
         </div>
       )
     }
@@ -164,14 +164,14 @@ export function Header() {
       <div className="flex items-center gap-4">
         <Link
           href="/auth/signin"
-          className="text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
+          className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
         >
           <LogIn className="h-5 w-5" />
           <span>Sign In</span>
         </Link>
         <Link
           href="/auth/signup"
-          className="text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-foreground hover:text-primary transition-colors"
         >
           Sign Up
         </Link>
@@ -181,27 +181,27 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 bg-gray-50/80 dark:bg-dark-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background backdrop-blur-md border-b border-border">
         <nav className="container mx-auto px-6 max-w-6xl flex items-center justify-between h-16">
           <Link
             href="/"
             className="flex items-center gap-4 group"
           >
-            <span className="font-lobster text-4xl tracking-wide text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            <span className="font-lobster text-4xl tracking-wide text-foreground group-hover:text-primary transition-colors">
               iTalkDevs
             </span>
-            <div className="flex items-center justify-center w-10 h-10 bg-pink-600 group-hover:bg-pink-700 dark:bg-pink-500 dark:group-hover:bg-pink-600 rounded-lg transition-colors">
-              <span className="font-lobster text-base tracking-wider text-white">
+            <div className="flex items-center justify-center w-10 h-10 bg-primary group-hover:bg-primary-hover rounded-lg transition-colors">
+              <span className="font-lobster text-base tracking-wider text-primary-foreground">
                 iTD
               </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-4 md:hidden">
-            <ThemeToggle />
+          <div className="flex items-center gap-2 md:hidden">
+            <ColorPaletteSelector />
             <button
               type="button"
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-800"
+              className="p-2 rounded-lg hover:bg-accent text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span className="sr-only">Open menu</span>
@@ -219,24 +219,24 @@ export function Header() {
                 href={item.href}
                 key={item.name}
                 className={clsx(
-                  'text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors',
-                  isActive(item.href) && 'text-primary-600 dark:text-primary-400'
+                  'text-foreground hover:text-primary transition-colors',
+                  isActive(item.href) && 'text-primary'
                 )}
               >
                 {item.name}
               </Link>
             ))}
 
-            <div className="h-6 w-px bg-gray-200 dark:bg-dark-700" />
+            <div className="h-6 w-px bg-border" />
 
             {renderAuthLinks()}
-            <ThemeToggle />
+            <ColorPaletteSelector />
           </div>
         </nav>
 
         {mobileMenuOpen && (
           <>
-            <div className="absolute inset-x-0 top-full bg-white dark:bg-dark-900 shadow-lg md:hidden">
+            <div className="absolute inset-x-0 top-full bg-background shadow-lg md:hidden border-b border-border">
               <nav className="container mx-auto px-4 py-4">
                 <div className="flex flex-col space-y-4">
                   {navigation.map((item) => (
@@ -245,25 +245,25 @@ export function Header() {
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={clsx(
-                        'text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors',
-                        isActive(item.href) && 'text-primary-600 dark:text-primary-400'
+                        'text-lg py-2 text-foreground hover:text-primary transition-colors',
+                        isActive(item.href) && 'text-primary'
                       )}
                     >
                       {item.name}
                     </Link>
                   ))}
-                  
+
                   {user && (
                     <>
-                      <div className="h-px bg-gray-200 dark:bg-dark-700" />
+                      <div className="h-px bg-border" />
                       <div className="flex items-center gap-2 py-2">
                         {renderUserAvatar()}
-                        <span className="text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</span>
+                        <span className="text-foreground">{user.displayName || 'User'}</span>
                       </div>
                       <Link
                         href="/user/profile"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        className="text-lg py-2 text-foreground hover:text-primary transition-colors"
                       >
                         Profile
                       </Link>
@@ -271,34 +271,34 @@ export function Header() {
                         <Link
                           href="/admin/dashboard"
                           onClick={() => setMobileMenuOpen(false)}
-                          className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                          className="text-lg py-2 text-foreground hover:text-primary transition-colors"
                         >
                           Admin Dashboard
                         </Link>
                       )}
                       <button
                         onClick={handleSignOut}
-                        className="text-left text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        className="text-left text-lg py-2 text-foreground hover:text-primary transition-colors"
                       >
                         Sign Out
                       </button>
                     </>
                   )}
-                  
+
                   {!user && (
                     <>
-                      <div className="h-px bg-gray-200 dark:bg-dark-700" />
+                      <div className="h-px bg-border" />
                       <Link
                         href="/auth/signin"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        className="text-lg py-2 text-foreground hover:text-primary transition-colors"
                       >
                         Sign In
                       </Link>
                       <Link
                         href="/auth/signup"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg py-2 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        className="text-lg py-2 text-foreground hover:text-primary transition-colors"
                       >
                         Sign Up
                       </Link>
@@ -323,17 +323,17 @@ export function Header() {
         onClose={() => setShowSignOutModal(false)}
         title="Sign Out Confirmation"
       >
-        <p>Are you sure you want to sign out?</p>
+        <p className="text-card-foreground">Are you sure you want to sign out?</p>
         <div className="mt-4 flex justify-end gap-4">
           <button
             onClick={() => setShowSignOutModal(false)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={confirmSignOut}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded-md transition-colors"
           >
             Sign Out
           </button>
@@ -346,11 +346,11 @@ export function Header() {
         onClose={() => setShowErrorModal(false)}
         title="Error"
       >
-        <p>An error occurred while signing out. Please try again.</p>
+        <p className="text-card-foreground">An error occurred while signing out. Please try again.</p>
         <div className="mt-4 flex justify-end">
           <button
             onClick={() => setShowErrorModal(false)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Close
           </button>

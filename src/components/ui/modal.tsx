@@ -53,21 +53,21 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
       <FocusLock returnFocus>
         <div
           ref={modalRef}
-          className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800"
+          className="relative w-full max-w-md rounded-lg bg-card p-6 shadow-lg border border-border"
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? "modal-title" : undefined}
           aria-describedby="modal-content"
         >
           {title && (
-            <h2 id="modal-title" className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 id="modal-title" className="mb-4 text-xl font-semibold text-card-foreground">
               {title}
             </h2>
           )}
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Close dialog"
           >
             <span className="sr-only">Close</span>

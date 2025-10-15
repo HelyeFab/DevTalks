@@ -17,13 +17,29 @@ body {
 }
 
 :root {
+  /* Default theme variables - Classic Light */
+  /* These are overridden by the color palette selector */
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-.dark {
-  --background: #0f172a;
-  --foreground: #ededed;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --primary-hover: #7c3aed;
+  --secondary: #f9fafb;
+  --secondary-foreground: #111827;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --accent: #f9fafb;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #ffffff;
+  --ring: #8b5cf6;
+  --radius: 0.5rem;
 }
 
 body {
@@ -48,9 +64,10 @@ code.hljs {
   background: #ffffff;
 }
 
-.dark .hljs {
-  color: #c9d1d9;
-  background: #0f172a;
+/* Syntax highlighting - adapts to theme */
+.hljs {
+  color: var(--foreground);
+  background: var(--secondary);
 }
 
 .hljs-doctag,
@@ -60,31 +77,15 @@ code.hljs {
 .hljs-template-variable,
 .hljs-type,
 .hljs-variable.language_ {
-  color: #d73a49;
-}
-
-.dark .hljs-doctag,
-.dark .hljs-keyword,
-.dark .hljs-meta .hljs-keyword,
-.dark .hljs-template-tag,
-.dark .hljs-template-variable,
-.dark .hljs-type,
-.dark .hljs-variable.language_ {
-  color: #66d9ef;
+  color: var(--primary);
 }
 
 .hljs-title,
 .hljs-title.class_,
 .hljs-title.class_.inherited__,
 .hljs-title.function_ {
-  color: #6f42c1;
-}
-
-.dark .hljs-title,
-.dark .hljs-title.class_,
-.dark .hljs-title.class_.inherited__,
-.dark .hljs-title.function_ {
-  color: #8ac6f2;
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .hljs-attr,
@@ -97,132 +98,124 @@ code.hljs {
 .hljs-selector-class,
 .hljs-selector-id,
 .hljs-variable {
-  color: #005cc5;
-}
-
-.dark .hljs-attr,
-.dark .hljs-attribute,
-.dark .hljs-literal,
-.dark .hljs-meta,
-.dark .hljs-number,
-.dark .hljs-operator,
-.dark .hljs-selector-attr,
-.dark .hljs-selector-class,
-.dark .hljs-selector-id,
-.dark .hljs-variable {
-  color: #56b3fa;
+  color: var(--foreground);
+  opacity: 0.8;
 }
 
 .hljs-regexp,
 .hljs-string,
 .hljs-meta .hljs-string {
-  color: #032f62;
-}
-
-.dark .hljs-regexp,
-.dark .hljs-string,
-.dark .hljs-meta .hljs-string {
-  color: #87ceeb;
+  color: var(--primary);
+  opacity: 0.7;
 }
 
 .hljs-built_in,
 .hljs-symbol {
-  color: #e36209;
-}
-
-.dark .hljs-built_in,
-.dark .hljs-symbol {
-  color: #ffa07a;
+  color: var(--primary);
 }
 
 .hljs-comment,
 .hljs-code,
 .hljs-formula {
-  color: #6a737d;
-}
-
-.dark .hljs-comment,
-.dark .hljs-code,
-.dark .hljs-formula {
-  color: #8b949e;
+  color: var(--muted-foreground);
 }
 
 .hljs-name,
 .hljs-quote,
 .hljs-selector-tag,
 .hljs-selector-pseudo {
-  color: #22863a;
-}
-
-.dark .hljs-name,
-.dark .hljs-quote,
-.dark .hljs-selector-tag,
-.dark .hljs-selector-pseudo {
-  color: #7ee787;
+  color: var(--foreground);
 }
 
 .hljs-subst {
-  color: #24292e;
-}
-
-.dark .hljs-subst {
-  color: #c9d1d9;
+  color: var(--foreground);
 }
 
 .hljs-section {
-  color: #005cc5;
-  font-weight: bold;
-}
-
-.dark .hljs-section {
-  color: #56b3fa;
+  color: var(--primary);
   font-weight: bold;
 }
 
 .hljs-bullet {
-  color: #735c0f;
-}
-
-.dark .hljs-bullet {
-  color: #f2cc60;
+  color: var(--muted-foreground);
 }
 
 .hljs-emphasis {
-  color: #24292e;
-  font-style: italic;
-}
-
-.dark .hljs-emphasis {
-  color: #c9d1d9;
+  color: var(--foreground);
   font-style: italic;
 }
 
 .hljs-strong {
-  color: #24292e;
-  font-weight: bold;
-}
-
-.dark .hljs-strong {
-  color: #c9d1d9;
+  color: var(--foreground);
   font-weight: bold;
 }
 
 .hljs-addition {
-  color: #22863a;
-  background-color: #f0fff4;
-}
-
-.dark .hljs-addition {
-  color: #aff5b4;
-  background-color: #033a16;
+  color: var(--primary);
+  background-color: var(--secondary);
 }
 
 .hljs-deletion {
-  color: #b31d28;
-  background-color: #ffeef0;
+  color: var(--destructive);
+  background-color: var(--secondary);
 }
 
-.dark .hljs-deletion {
-  color: #ffdcd7;
-  background-color: #67060c;
+/* Kodee Utility Classes */
+.gradient-purple {
+  background: var(--primary);
+}
+
+.gradient-text {
+  background: var(--primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Playful Pets Pattern Theme */
+.theme-with-pattern body {
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.12' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='0.5'%3E%3C!-- Paw 1 (small) --%3E%3Cg transform='translate(25,30) rotate(15) scale(0.8)'%3E%3Cellipse cx='0' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='6' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='-2' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='8' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='3' cy='6' rx='4' ry='5'/%3E%3C/g%3E%3C!-- Paw 2 (large) --%3E%3Cg transform='translate(165,45) rotate(-20) scale(1.4)'%3E%3Cellipse cx='0' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='6' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='-2' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='8' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='3' cy='6' rx='4' ry='5'/%3E%3C/g%3E%3C!-- Paw 3 (medium) --%3E%3Cg transform='translate(90,170) rotate(45) scale(1.1)'%3E%3Cellipse cx='0' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='6' cy='-5' rx='2.5' ry='3.5'/%3E%3Cellipse cx='-2' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='8' cy='2' rx='2.5' ry='3.5'/%3E%3Cellipse cx='3' cy='6' rx='4' ry='5'/%3E%3C/g%3E%3C!-- Dog (large) --%3E%3Cg transform='translate(140,90) rotate(-10) scale(1.3)'%3E%3Cpath d='M0 0c-3 0-5 2-5 5v3c0 2 1 3 2 4l-1 3c0 1 1 2 2 2h6c1 0 2-1 2-2l-1-3c1-1 2-2 2-4v-3c0-3-2-5-5-5h-2z'/%3E%3Ccircle cx='-1' cy='4' r='1'/%3E%3Ccircle cx='5' cy='4' r='1'/%3E%3C/g%3E%3C!-- Cat (medium) --%3E%3Cg transform='translate(50,120) rotate(25) scale(1.2)'%3E%3Cpath d='M0 0l-3-5v8c0 2 1 3 3 3s3-1 3-3v-8l-3 5z'/%3E%3Ccircle cx='0' cy='8' r='5'/%3E%3Ccircle cx='-2' cy='7' r='1'/%3E%3Ccircle cx='2' cy='7' r='1'/%3E%3C/g%3E%3C!-- Fish 1 (small) --%3E%3Cg transform='translate(180,150) rotate(-30) scale(0.9)'%3E%3Cpath d='M0 0c-4 0-7 2-7 5s3 5 7 5c2 0 4-1 5-2l3 2-3-5 3-5-3 2c-1-1-3-2-5-2z'/%3E%3Ccircle cx='2' cy='4' r='1'/%3E%3C/g%3E%3C!-- Fish 2 (tiny) --%3E%3Cg transform='translate(70,60) rotate(60) scale(0.7)'%3E%3Cpath d='M0 0c-3 0-5 1.5-5 3.5s2 3.5 5 3.5c1.5 0 3-0.7 3.5-1.5l2 1.5-2-3.5 2-3.5-2 1.5c-0.5-0.8-2-1.5-3.5-1.5z'/%3E%3Ccircle cx='1.5' cy='3' r='0.8'/%3E%3C/g%3E%3C!-- Bone 1 (medium) --%3E%3Cg transform='translate(30,160) rotate(-15) scale(1.0)'%3E%3Cpath d='M0 0c-2 0-3 1-3 3 0 1 1 2 2 2h8c1 0 2-1 2-2 0-2-1-3-3-3h-6z'/%3E%3Ccircle cx='0' cy='3' r='2'/%3E%3Ccircle cx='8' cy='3' r='2'/%3E%3C/g%3E%3C!-- Bone 2 (small) --%3E%3Cg transform='translate(120,25) rotate(70) scale(0.85)'%3E%3Cpath d='M0 0c-1.5 0-2 0.7-2 2 0 0.7 0.7 1.5 1.5 1.5h6c0.7 0 1.5-0.7 1.5-1.5 0-1.3-0.7-2-2-2h-5z'/%3E%3Ccircle cx='0' cy='2' r='1.5'/%3E%3Ccircle cx='6' cy='2' r='1.5'/%3E%3C/g%3E%3C!-- Heart (large) --%3E%3Cg transform='scale(1.5)'%3E%3Cpath d='M10 123c0-2 1.3-3.3 3.3-3.3s3.3 1.3 3.3 3.3c0 0 0 0 0 0 0-2 1.3-3.3 3.3-3.3s3.3 1.3 3.3 3.3c0 3.3-3.3 6.7-6.7 10-3.3-3.3-6.7-6.7-6.7-10z' fill-opacity='0.08'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  background-repeat: repeat;
 }

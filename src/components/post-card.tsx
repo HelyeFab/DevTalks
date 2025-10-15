@@ -34,7 +34,7 @@ export function PostCard({ post }: Props) {
   return (
     <article
       onClick={handleCardClick}
-      className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer h-48"
+      className="group bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer h-48 border border-border"
     >
       <div className="flex h-full">
         <div className="w-1/3">
@@ -48,35 +48,35 @@ export function PostCard({ post }: Props) {
                 className="object-cover"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                <span className="text-gray-400 dark:text-gray-500">No image</span>
+              <div className="absolute inset-0 flex items-center justify-center bg-secondary">
+                <span className="text-muted-foreground">No image</span>
               </div>
             )}
           </div>
         </div>
         <div className="w-2/3 p-4 flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1">
+            <h3 className="text-lg font-bold mb-2 text-card-foreground group-hover:text-primary transition-colors line-clamp-1">
               {post.title}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
               {post.excerpt ? stripHtmlTags(post.excerpt) : ''}
             </p>
             <div className="flex flex-wrap gap-1 mb-2">
               {post.tags.slice(0, 2).map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100 px-2 py-0.5 rounded"
+                  className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
                 >
                   {tag}
                 </span>
               ))}
               {post.tags.length > 2 && (
-                <span className="text-xs text-gray-500">+{post.tags.length - 2} more</span>
+                <span className="text-xs text-muted-foreground">+{post.tags.length - 2} more</span>
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               {post.author.image && (
                 <Image

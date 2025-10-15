@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { ThemeProvider } from 'next-themes'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Header } from '@/components/header'
@@ -26,17 +25,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-      </div>
-    </ThemeProvider>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+    </div>
   )
 }
