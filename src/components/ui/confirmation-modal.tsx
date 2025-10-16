@@ -1,3 +1,5 @@
+'use client'
+
 import { Modal } from './modal'
 
 interface ConfirmationModalProps {
@@ -27,20 +29,20 @@ export function ConfirmationModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="mt-2">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
 
       <div className="mt-6 flex justify-end space-x-4">
         <button
           type="button"
-          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          className="rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           onClick={onClose}
         >
           {cancelText}
         </button>
         <button
           type="button"
-          className="rounded-md bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 dark:bg-pink-500 dark:hover:bg-pink-600"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           onClick={handleConfirm}
         >
           {confirmText}

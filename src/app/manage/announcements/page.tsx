@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ManageAnnouncementsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 max-w-6xl py-8">
       <ManageAnnouncements />
     </div>
   )

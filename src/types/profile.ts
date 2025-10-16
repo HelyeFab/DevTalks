@@ -6,6 +6,7 @@ export interface UserProfile {
   bio?: string
   isAdmin?: boolean
   socialLinks?: {
+    x?: string
     twitter?: string
     github?: string
     linkedin?: string

@@ -1,0 +1,21 @@
+{
+  "name": "DevTalks",
+  "short_name": "DevTalks",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "description": "Developer community hub for articles, projects, and resources.",
+  "icons": [
+    {
+      "src": "/globe.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/file.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}

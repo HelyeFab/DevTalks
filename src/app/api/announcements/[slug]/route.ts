@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAnnouncement, Announcement } from '@/lib/announcements'
-import { withAuth, createErrorResponse } from '@/lib/auth-middleware'
 import { initAdmin } from '@/lib/firebase-admin'
+import {
+  withAdminAuth,
+  createApiError,
+  withRateLimit,
+  RateLimitPresets,
+  type AuthContext
+} from '@/lib/auth'
 
 // Define UpdateAnnouncementData interface
 interface UpdateAnnouncementData extends Partial<Announcement> {}
@@ -10,53 +16,38 @@ export const dynamic = 'force-dynamic'
 
 const { db } = initAdmin()
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  const resolvedParams = await params;
-  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string' || resolvedParams.slug === 'undefined') {
-    return NextResponse.json(
-      { error: 'Invalid announcement URL' },
-      { status: 400 }
-    )
-  }
-
-  try {
-    const announcement = await getAnnouncement(resolvedParams.slug)
-
-    if (!announcement) {
-      return NextResponse.json(
-        { error: 'Announcement not found' },
-        { status: 404 }
-      )
+// Apply rate limiting to GET requests
+export const GET = withRateLimit(
+  async (
+    _request: Request,
+    context: { params: Promise<{ slug: string }> }
+  ) => {
+    const resolvedParams = await context.params;
+    if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string' || resolvedParams.slug === 'undefined') {
+      return createApiError('Invalid announcement URL', 400)
     }
 
-    return NextResponse.json(announcement)
-  } catch (error) {
-    console.error('Error fetching announcement:', error)
-    return createErrorResponse('Failed to fetch announcement')
-  }
-}
+    try {
+      const announcement = await getAnnouncement(resolvedParams.slug)
+
+      if (!announcement) {
+        return createApiError('Announcement not found', 404)
+      }
+
+      return NextResponse.json(announcement)
+    } catch (error) {
+      console.error('Error fetching announcement:', error)
+      return createApiError('Failed to fetch announcement', 500)
+    }
+  },
+  RateLimitPresets.generous
+)
 
 /**
  * Helper function to get an announcement by slug from params
  */
-async function getAnnouncementBySlugParam(slug: string | undefined): Promise<Announcement | null> {
-  if (!slug || typeof slug !== 'string') {
-    return null;
-  }
-
-  // Using non-null assertion (!) since we've already checked that slug is a string
-  return await getAnnouncement(slug!);
-}
 
 // Utility function to assert string type
-function assertString(value: string | undefined): asserts value is string {
-  if (typeof value !== 'string' || !value) {
-    throw new Error('Value must be a string');
-  }
-}
 
 // TypeScript-friendly announcement retriever
 async function getAnnouncementById(id: string): Promise<Announcement | null> {
@@ -68,122 +59,108 @@ async function getAnnouncementById(id: string): Promise<Announcement | null> {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  console.log('\n--- Updating announcement ---')
-  const resolvedParams = await params;
+// Admin-only PUT with rate limiting
+export const PUT = withRateLimit(
+  withAdminAuth(
+    async (
+      request: NextRequest,
+      context: { params: Promise<{ slug: string }> },
+      authContext: AuthContext
+    ) => {
+      console.log('\n--- Updating announcement ---')
+      const resolvedParams = await context.params;
 
-  // Early validation and conversion to string
-  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
-    return NextResponse.json(
-      { error: 'Invalid announcement ID' },
-      { status: 400 }
-    )
-  }
-
-  // Explicitly create a string variable
-  const slug: string = resolvedParams.slug;
-
-  // Require admin privileges for this route
-  return withAuth(request, async (authContext) => {
-    try {
-      console.log('Updating announcement:', { slug })
-      console.log('Authenticated user:', {
-        uid: authContext.userId,
-        email: authContext.email,
-        isAdmin: authContext.isAdmin
-      })
-
-      // Check if user is admin
-      if (!authContext.isAdmin) {
-        return NextResponse.json(
-          { error: 'Admin access required' },
-          { status: 403 }
-        )
+      // Early validation and conversion to string
+      if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
+        return createApiError('Invalid announcement ID', 400)
       }
 
-      // Using our TypeScript-friendly function with the string variable
-      const announcement = await getAnnouncementById(slug)
+      const slug: string = resolvedParams.slug;
 
-      if (!announcement) {
-        return NextResponse.json(
-          { error: 'Announcement not found' },
-          { status: 404 }
+      try {
+        console.log('Updating announcement:', { slug, userId: authContext.user.uid })
+
+        // Using our TypeScript-friendly function with the string variable
+        const announcement = await getAnnouncementById(slug)
+
+        if (!announcement) {
+          return createApiError('Announcement not found', 404)
+        }
+
+        // Get the update data from the request body
+        const updateData: UpdateAnnouncementData = await request.json()
+        console.log('Update data:', updateData)
+
+        // Update the announcement
+        if (!announcement.id) {
+          return createApiError('Invalid announcement ID', 400)
+        }
+        const announcementRef = db.collection('announcements').doc(announcement.id)
+        await announcementRef.update({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+
+        return NextResponse.json({ success: true })
+      } catch (error) {
+        console.error('Error updating announcement:', error)
+        return createApiError(
+          error instanceof Error ? error.message : 'Failed to update announcement',
+          500
         )
       }
-
-      // Get the update data from the request body
-      const updateData: UpdateAnnouncementData = await request.json()
-      console.log('Update data:', updateData)
-
-      // Update the announcement
-      const announcementRef = db.collection('announcements').doc(announcement.id)
-      await announcementRef.update({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-
-      return NextResponse.json({ success: true })
-    } catch (error) {
-      console.error('Error updating announcement:', error)
-      return createErrorResponse(error instanceof Error ? error.message : 'Failed to update announcement')
     }
-  }, true) // requireAdmin=true
-}
+  ),
+  RateLimitPresets.moderate
+)
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  console.log('\n--- Deleting announcement ---')
-  const resolvedParams = await params;
+// Admin-only DELETE with rate limiting
+export const DELETE = withRateLimit(
+  withAdminAuth(
+    async (
+      request: NextRequest,
+      context: { params: Promise<{ slug: string }> },
+      authContext: AuthContext
+    ) => {
+      console.log('\n--- Deleting announcement ---')
+      const resolvedParams = await context.params;
 
-  // Early validation and conversion to string
-  if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
-    return NextResponse.json(
-      { error: 'Invalid announcement ID' },
-      { status: 400 }
-    )
-  }
-
-  // Explicitly create a string variable
-  const slug: string = resolvedParams.slug;
-
-  // Require admin privileges for this route
-  return withAuth(request, async (authContext) => {
-    try {
-      console.log('Deleting announcement:', { slug })
-      console.log('Authenticated user:', {
-        uid: authContext.userId,
-        email: authContext.email,
-        isAdmin: authContext.isAdmin
-      })
-
-      // Check if user is admin
-      if (!authContext.isAdmin) {
-        return NextResponse.json(
-          { error: 'Admin access required' },
-          { status: 403 }
-        )
+      // Early validation and conversion to string
+      if (!resolvedParams.slug || typeof resolvedParams.slug !== 'string') {
+        return createApiError('Invalid announcement ID', 400)
       }
 
-      // Using our TypeScript-friendly function with the string variable
-      const announcement = await getAnnouncementById(slug)
+      const slug: string = resolvedParams.slug;
 
-      if (!announcement) {
-        return NextResponse.json(
-          { error: 'Announcement not found' },
-          { status: 404 }
+      try {
+        console.log('Deleting announcement:', { slug, userId: authContext.user.uid })
+
+        // Using our TypeScript-friendly function with the string variable
+        const announcement = await getAnnouncementById(slug)
+
+        if (!announcement) {
+          return createApiError('Announcement not found', 404)
+        }
+
+        // Delete the announcement
+        if (!announcement.id) {
+          return createApiError('Invalid announcement ID', 400)
+        }
+        const announcementRef = db.collection('announcements').doc(announcement.id)
+        await announcementRef.delete()
+
+        return NextResponse.json({ success: true })
+      } catch (error) {
+        console.error('Error deleting announcement:', error)
+        return createApiError(
+          error instanceof Error ? error.message : 'Failed to delete announcement',
+          500
         )
       }
-
-      // Delete the announcement
-      const announcementRef = db.collection('announcements').doc(announcement.id)
-      await announcementRef.delete()
-
-      return NextResponse.json({ success: true })
-    } catch (error) {
-      console.error('Error deleting announcement:', error)
-      return createErrorResponse(error instanceof Error ? error.message : 'Failed to delete announcement')
     }
-  }, true) // requireAdmin=true
-}
+  ),
+  RateLimitPresets.moderate
+)
 
 // Handle other HTTP methods
 export async function POST() {

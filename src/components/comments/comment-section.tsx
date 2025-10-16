@@ -19,7 +19,7 @@ export function CommentSection({ postId }: Props) {
   const { user, loading: authLoading } = useAuth()
 
   // Check if we're in the test blog post (development mode convenience)
-  const isTestPost = postId === 'test' || postId === 'test-post' || postId === 'pDdGSv9wkeTbLqw6VHOD';
+  const _isTestPost = postId === 'test' || postId === 'test-post' || postId === 'pDdGSv9wkeTbLqw6VHOD';
 
   // Fetch comments
   useEffect(() => {
@@ -344,6 +344,7 @@ export function CommentSection({ postId }: Props) {
             key={comment.id}
             comment={comment}
             currentUser={user}
+            postId={postId}
             onReply={addReply}
             onEdit={editComment}
             onDelete={deleteComment}

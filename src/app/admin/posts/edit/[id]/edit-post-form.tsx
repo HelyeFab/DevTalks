@@ -28,7 +28,7 @@ interface Props {
 type EditorMode = 'edit' | 'live' | 'preview'
 
 export function EditPostForm({ post: initialPost }: Props) {
-  const { user, loading, isAdmin } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState(initialPost.title)
   const [subtitle, setSubtitle] = useState(initialPost.subtitle)
@@ -39,7 +39,7 @@ export function EditPostForm({ post: initialPost }: Props) {
   )
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [published, setPublished] = useState(initialPost.published)
+  const [published] = useState(initialPost.published)
   const [image, setImage] = useState(initialPost.image || '')
   const [imageAlt, setImageAlt] = useState(initialPost.imageAlt || '')
   const [editorMode, setEditorMode] = useState<EditorMode>('live')

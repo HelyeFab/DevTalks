@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { ArrowLeft, Github, ExternalLink } from 'lucide-react'
 import { getProjectBySlug } from '@/lib/projects'
 import { Markdown } from '@/components/markdown'
+import { generateProjectMetadata } from '@/lib/seo/meta-generator'
+import { generateProjectSchema, generateBreadcrumbSchema, toJsonLd } from '@/lib/seo/schema'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
 interface Props {
   params: Promise<{
@@ -23,10 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
 
-    return {
-      title: project.title,
-      description: project.description,
-    }
+    // Use the comprehensive meta generator with dynamic OG images
+    return generateProjectMetadata(project, {
+      generateOGImage: true, // Use dynamic OG image generation
+    })
   } catch (error) {
     console.error('Error generating project metadata:', error)
     return {
@@ -45,8 +48,33 @@ export default async function ProjectPage({ params }: Props) {
       notFound()
     }
 
+    // Generate structured data
+    const projectSchema = generateProjectSchema(project)
+
+    // Generate breadcrumbs
+    const breadcrumbs = [
+      { name: 'Home', url: '/' },
+      { name: 'Projects', url: '/projects' },
+      { name: project.title, url: `/projects/${project.slug}` },
+    ]
+
+    const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs)
+
     return (
-      <article className="container mx-auto px-4 py-12 max-w-4xl">
+      <>
+        {/* Structured data - Project */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toJsonLd(projectSchema) }}
+        />
+        {/* Structured data - Breadcrumbs */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
+        />
+
+        <article className="container mx-auto px-4 py-12 max-w-4xl">
+          <Breadcrumbs items={breadcrumbs} className="mb-8" />
         <Link
           href="/projects"
           className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 mb-8"
@@ -62,7 +90,7 @@ export default async function ProjectPage({ params }: Props) {
               alt={project.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              className="object-cover rounded-lg"
+              className="object-cover object-center-top rounded-lg"
               priority
             />
           </div>
@@ -115,6 +143,7 @@ export default async function ProjectPage({ params }: Props) {
           <Markdown content={project.content} />
         </div>
       </article>
+      </>
     )
   } catch (error) {
     console.error('Error loading project:', error)

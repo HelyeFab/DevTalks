@@ -1,11 +1,11 @@
-'use client'
-
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
 import type { BlogPost } from '@/types/blog'
 import { Clock } from 'lucide-react'
 import { formatReadTime } from '@/utils/read-time'
+import { UpvoteButton } from './upvote-button'
+import { PostCardClient } from './post-card-client'
+import { generateShimmerDataURL } from '@/lib/image-optimization'
 
 // Helper function to strip HTML tags from text
 function stripHtmlTags(html: string): string {
@@ -16,26 +16,13 @@ interface Props {
   post: BlogPost
 }
 
+// Server Component - renders post data and wraps with minimal Client Component for interactivity
 export function PostCard({ post }: Props) {
-  const router = useRouter()
-
-  const handleCardClick = () => {
-    router.push(`/blog/${post.slug}`)
-  }
-
   // Format date safely to avoid hydration issues
   const formattedDate = post.date ? format(parseISO(post.date), 'MMMM d, yyyy') : 'No date'
 
-  // Get the full URL for sharing
-  const postUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/blog/${post.slug}`
-    : `/blog/${post.slug}`
-
   return (
-    <article
-      onClick={handleCardClick}
-      className="group bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl cursor-pointer h-48 border border-border"
-    >
+    <PostCardClient slug={post.slug}>
       <div className="flex h-full">
         <div className="w-1/3">
           <div className="relative h-full">
@@ -45,7 +32,11 @@ export function PostCard({ post }: Props) {
                 alt={post.title}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover"
+                className="object-cover object-center-top"
+                quality={85}
+                placeholder="blur"
+                blurDataURL={generateShimmerDataURL()}
+                loading="lazy"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-secondary">
@@ -77,18 +68,33 @@ export function PostCard({ post }: Props) {
             </div>
           </div>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              {post.author.image && (
-                <Image
-                  src={post.author.image}
-                  alt={post.author.name}
-                  width={20}
-                  height={20}
-                  className="rounded-full"
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {post.author.image && (
+                  <Image
+                    src={post.author.image}
+                    alt={post.author.name}
+                    width={20}
+                    height={20}
+                    className="rounded-full"
+                    quality={85}
+                    loading="lazy"
+                  />
+                )}
+                <span className="font-semibold">{post.author.name}</span>
+              </div>
+
+              <div className="flex items-center gap-1" data-card-link>
+                <UpvoteButton
+                  postId={post.id}
+                  initialUpvotes={post.upvotes || 0}
+                  size="small"
+                  showCount={true}
+                  className="hover:bg-gray-200 dark:hover:bg-gray-700"
                 />
-              )}
-              <span className="font-semibold">{post.author.name}</span>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
               <time dateTime={post.date} className="text-sm">{formattedDate}</time>
               {post.readTime && (
@@ -104,6 +110,6 @@ export function PostCard({ post }: Props) {
           </div>
         </div>
       </div>
-    </article>
+    </PostCardClient>
   )
 }

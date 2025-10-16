@@ -73,7 +73,7 @@ export function SearchModal({ children }: { children?: React.ReactNode }) {
     return () => clearTimeout(delayDebounce)
   }, [searchQuery])
 
-  const handleOpenSearch = () => {
+  const _handleOpenSearch = () => {
     setIsOpen(true)
     setSearchQuery('')
     setResults([])

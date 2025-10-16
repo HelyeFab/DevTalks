@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import {
   User,
   onAuthStateChanged,
-  getAuth,
+  // getAuth,
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
@@ -47,18 +47,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       try {
         if (user) {
-          // Get admin email from environment collection
-          const envRef = doc(db, 'env', 'admin')
-          const envSnap = await getDoc(envRef)
-          const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
+          let isUserAdmin = false;
 
-          // Check if user is admin
-          const isUserAdmin = user.email === adminEmail
+          try {
+            // Get admin email from environment collection
+            // This might fail for non-admin users due to Firestore rules
+            const envRef = doc(db, 'env', 'admin')
+            const envSnap = await getDoc(envRef)
+            const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
+
+            // Check if user is admin
+            isUserAdmin = user.email === adminEmail
+          } catch (err) {
+            // If permission error, assume not admin and continue
+            console.log('Not an admin user, continuing as regular user')
+            isUserAdmin = false
+          }
 
           // Create or update user profile
           const profileRef = doc(db, 'profiles', user.uid)
           const profileSnap = await getDoc(profileRef)
-          
+
           if (!profileSnap.exists()) {
             await setDoc(profileRef, {
               email: user.email,
@@ -94,15 +103,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const provider = new GoogleAuthProvider()
     const result = await signInWithPopup(firebaseAuth, provider)
-    
-    // Get admin email from environment collection
-    const envRef = doc(db, 'env', 'admin')
-    const envSnap = await getDoc(envRef)
-    const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
 
-    // Check if user is admin
-    const isUserAdmin = result.user.email === adminEmail
-    
+    let isUserAdmin = false;
+
+    try {
+      // Get admin email from environment collection
+      const envRef = doc(db, 'env', 'admin')
+      const envSnap = await getDoc(envRef)
+      const adminEmail = envSnap.exists() ? envSnap.data().adminEmail : null
+
+      // Check if user is admin
+      isUserAdmin = result.user.email === adminEmail
+    } catch (err) {
+      // If permission error, assume not admin and continue
+      console.log('Not an admin user, continuing as regular user')
+      isUserAdmin = false
+    }
+
     // Create or update user profile
     const profileRef = doc(db, 'profiles', result.user.uid)
     await setDoc(profileRef, {

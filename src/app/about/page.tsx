@@ -3,11 +3,21 @@ import Image from 'next/image'
 import { Github, Mail, Linkedin } from 'lucide-react'
 import { getAllProjects } from '@/lib/projects'
 import { ProjectSlideshow } from '@/components/project-slideshow'
+import { generateProfileMetadata } from '@/lib/seo/meta-generator'
+import { generateAboutPageSchema, toJsonLd } from '@/lib/seo/schema'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
-export const metadata: Metadata = {
-  title: 'About',
-  description: 'Software engineer, writer, and creator.',
-}
+export const metadata: Metadata = generateProfileMetadata({
+  name: 'Emmanuel Fabiani',
+  bio: 'Software Engineer, Certified Salesforce Administrator, and Computer Science student passionate about web development and technology. Experienced in React, Next.js, TypeScript, and modern web technologies.',
+  image: '/images/profile.png',
+  url: 'about',
+  socials: {
+    twitter: '@emmanuelfabiani',
+    github: 'https://github.com/emmanuelfabiani',
+    linkedin: 'https://linkedin.com/in/emmanuelfabiani',
+  },
+})
 
 export default async function AboutPage() {
   // Try to get featured projects, but have a fallback in case of errors
@@ -20,8 +30,23 @@ export default async function AboutPage() {
     // Continue with empty array if there's an error
   }
 
+  // Generate structured data
+  const schema = generateAboutPageSchema()
+
+  const breadcrumbs = [
+    { name: 'About', url: '/about' }
+  ]
+
   return (
-    <div className="container mx-auto px-4 max-w-6xl py-12">
+    <>
+      {/* Structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(schema) }}
+      />
+
+      <div className="container mx-auto px-4 max-w-6xl py-12">
+        <Breadcrumbs items={breadcrumbs} className="mb-8" />
       {/* Header Section */}
       <div className="flex flex-col items-center mb-16">
         <div className="relative w-48 h-48 mb-8">
@@ -30,7 +55,7 @@ export default async function AboutPage() {
             alt="Emmanuel Fabiani"
             fill
             sizes="(max-width: 768px) 192px, 192px"
-            className="rounded-full object-cover"
+            className="rounded-full object-cover object-center-top"
             priority
           />
         </div>
@@ -48,12 +73,13 @@ export default async function AboutPage() {
             <h2 className="text-2xl font-bold mb-4 text-card-foreground">About</h2>
             <div className="prose max-w-none">
               <p className="text-muted-foreground">
-                I'm Emmanuel, a software engineer based in Paris, France. I specialize in building
-                modern web applications with a focus on user experience and performance.
+                I am a certified Salesforce Administrator with a multidisciplinary background in web development, project management, and user-focused design. Currently completing a BSc in Computer Science with The Open University, I bring a strong foundation in both technical implementation and strategic problem-solving.
               </p>
               <p className="text-muted-foreground mt-4">
-                With a passion for clean code and innovative solutions, I enjoy tackling complex
-                problems and creating seamless digital experiences.
+                Over the years, I have developed and managed digital projects that reflect a commitment to quality, usability, and results. My work—ranging from running my own web design agency to designing automation flows and managing client expectations—demonstrates my ability to deliver structured, scalable solutions in dynamic environments.
+              </p>
+              <p className="text-muted-foreground mt-4">
+                I am highly self-motivated, well-organized, and accustomed to working independently in remote settings. My approach is both analytical and people-oriented: I enjoy translating complex requirements into actionable plans and ensuring systems are intuitive for users. As I move forward in my Salesforce career, I am looking to join a team where I can contribute meaningfully, continue growing, and help drive business value through smart use of technology.
               </p>
             </div>
           </div>
@@ -139,5 +165,6 @@ export default async function AboutPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

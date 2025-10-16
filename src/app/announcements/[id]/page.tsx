@@ -49,9 +49,11 @@ export default async function AnnouncementPage({ params }: Props) {
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-4">{announcement.title}</h1>
           <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <time dateTime={announcement.startDate}>
-              {format(new Date(announcement.startDate), 'MMMM d, yyyy')}
-            </time>
+            {announcement.startDate && (
+              <time dateTime={announcement.startDate || undefined}>
+                {format(new Date(announcement.startDate), 'MMMM d, yyyy')}
+              </time>
+            )}
             {announcement.pinned && (
               <Badge variant="destructive" className="gap-1">
                 <Pin className="h-3 w-3" />

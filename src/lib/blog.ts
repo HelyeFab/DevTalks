@@ -8,8 +8,8 @@ import {
   orderBy,
   Timestamp,
   FirestoreError,
-  increment,
-  runTransaction,
+  // increment,
+  // runTransaction,
   limit,
   addDoc,
   updateDoc,
@@ -36,7 +36,7 @@ class BlogError extends Error {
 }
 
 const COLLECTION_NAME = 'blog_posts'
-const UPVOTES_COLLECTION = 'post_upvotes'
+const _UPVOTES_COLLECTION = 'post_upvotes'
 
 // Helper function to convert Firestore data to BlogPost
 function convertPost(id: string, data: DocumentData): BlogPost {
@@ -325,8 +325,76 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   }
 }
 
+/**
+ * Get most upvoted blog posts
+ */
+export async function getMostUpvotedPosts(
+  options: {
+    limit?: number,
+    publishedOnly?: boolean,
+    minUpvotes?: number,
+    maxAgeDays?: number
+  } = {}
+): Promise<BlogPost[]> {
+  try {
+    if (!db) {
+      throw new Error('Firestore is not initialized')
+    }
+
+    const {
+      limit: postLimit = 5,
+      publishedOnly = true,
+      minUpvotes = 1, // Only include posts with at least 1 upvote by default
+      maxAgeDays = 90 // Consider posts from the last 90 days by default
+    } = options;
+
+    // Calculate the cutoff date for the age filter
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
+    const cutoffDateIso = cutoffDate.toISOString();
+
+    // Query for posts ordered by upvotes in descending order
+    const postsRef = collection(db, COLLECTION_NAME);
+    let q = query(
+      postsRef,
+      orderBy('upvotes', 'desc'),
+      limit(postLimit * 2) // Fetch more than we need in case some are filtered out
+    );
+
+    const querySnapshot = await getDocs(q);
+    const posts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
+
+    // Filter in memory for more complex criteria
+    const filteredPosts = posts.filter(post => {
+      // Check publication status if required
+      if (publishedOnly && !post.published) {
+        return false;
+      }
+
+      // Check minimum upvotes threshold
+      if ((post.upvotes || 0) < minUpvotes) {
+        return false;
+      }
+
+      // Filter by post age if maxAgeDays is provided
+      if (maxAgeDays > 0 && post.date < cutoffDateIso) {
+        return false;
+      }
+
+      // Post passed all filters
+      return true;
+    });
+
+    // Return limited results
+    return filteredPosts.slice(0, postLimit);
+  } catch (error) {
+    console.error('Error getting most upvoted posts:', error);
+    throw new BlogError('Failed to get most upvoted posts', error as FirestoreError);
+  }
+}
+
 // Client-side only functions
-export async function upvotePost(postId: string, userId: string): Promise<void> {
+export async function upvotePost(postId: string, _userId: string): Promise<void> {
   try {
     const idToken = await getAuth().currentUser?.getIdToken()
     if (!idToken) {

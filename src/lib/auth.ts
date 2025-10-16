@@ -9,8 +9,21 @@ import {
   signInWithEmailAndPassword
 } from 'firebase/auth'
 
-export const ADMIN_EMAIL = 'emmanuelfabiani23@gmail.com'
 export const DEFAULT_AVATAR = '/images/default-avatar.svg'
+
+/**
+ * Checks if user is admin by checking custom claims
+ * This will be set server-side using Firebase Admin SDK
+ */
+async function checkAdminClaims(user: User): Promise<boolean> {
+  try {
+    const idTokenResult = await user.getIdTokenResult()
+    return idTokenResult.claims.admin === true
+  } catch (error) {
+    console.error('Error checking admin claims:', error)
+    return false
+  }
+}
 
 export async function getCurrentAuth() {
   return new Promise((resolve) => {
@@ -78,10 +91,12 @@ export async function signOut() {
   }
 }
 
-export function isAdmin(user: User | null): boolean {
-  return user?.email === ADMIN_EMAIL
+export async function isAdmin(user: User | null): Promise<boolean> {
+  if (!user) return false
+  return checkAdminClaims(user)
 }
 
-export function getRedirectPath(user: User | null): string {
-  return isAdmin(user) ? '/admin/dashboard' : '/user/profile'
+export async function getRedirectPath(user: User | null): Promise<string> {
+  const adminStatus = await isAdmin(user)
+  return adminStatus ? '/admin/dashboard' : '/user/profile'
 }

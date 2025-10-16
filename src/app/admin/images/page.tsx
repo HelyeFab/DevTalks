@@ -18,7 +18,6 @@ export default function ImagesPage() {
   const [error, setError] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ImageMetadata | null>(null)
-  const [usedImages, setUsedImages] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -36,7 +35,6 @@ export default function ImagesPage() {
         // Get all posts to check which images are in use
         const result = await getAllPosts({ publishedOnly: false }) // Include drafts
         const usedImageUrls = new Set(result.items.map(post => post.image).filter(Boolean) as string[])
-        setUsedImages(usedImageUrls)
 
         // Get all images from storage
         const imagesList = await listImages()
@@ -98,7 +96,7 @@ export default function ImagesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 max-w-6xl py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Image Management</h1>
         <button

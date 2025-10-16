@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { format, parseISO } from 'date-fns'
 import { useAuth } from '@/contexts/auth-context'
 import { PenSquare, Trash2, Eye } from 'lucide-react'

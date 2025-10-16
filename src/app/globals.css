@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom utilities */
+@layer utilities {
+  .object-center-top {
+    object-position: center 20%;
+  }
+}
+
 /* Reset default margins */
 * {
   margin: 0;

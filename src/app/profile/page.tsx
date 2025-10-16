@@ -20,7 +20,7 @@ export default function ProfileRedirect() {
 
   // Show loading state
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 max-w-6xl py-12">
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-pulse text-gray-600 dark:text-gray-400">
           Loading...

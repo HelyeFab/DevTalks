@@ -117,7 +117,7 @@ export async function createComment(
     const docRef = await db.collection(COMMENTS_COLLECTION).add(commentData)
     const docSnap = await docRef.get()
     const createdAt = new Date().toISOString()
-    const docData = docSnap.data() || {};
+    const _docData = docSnap.data() || {};
 
     // Ensure all required Comment properties are present
     const newComment: Comment = {

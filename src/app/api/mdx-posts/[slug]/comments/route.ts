@@ -15,7 +15,7 @@ type RouteContext = {
   params: Promise<{ slug: string }>
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(_request: NextRequest, context: RouteContext) {
   const resolvedParams = await context.params;
   const slug = resolvedParams.slug
 

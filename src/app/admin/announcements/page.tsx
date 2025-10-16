@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
-import { PenSquare, Trash2, Eye } from 'lucide-react'
+import { PenSquare, Trash2 } from 'lucide-react'
 import { getAllAnnouncements, deleteAnnouncement, updateAnnouncement, type Announcement } from '@/lib/announcements'
 import { format } from 'date-fns'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
@@ -29,9 +29,9 @@ export default function AnnouncementsList() {
     async function fetchAnnouncements() {
       try {
         console.log('Fetching all announcements including drafts...')
-        const fetchedAnnouncements = await getAllAnnouncements(false)
-        console.log('Fetched announcements:', fetchedAnnouncements)
-        setAnnouncements(fetchedAnnouncements)
+        const result = await getAllAnnouncements({ publishedOnly: false })
+        console.log('Fetched announcements:', result.items)
+        setAnnouncements(result.items)
       } catch (error) {
         console.error('Error fetching announcements:', error)
         setError('Failed to load announcements')
@@ -69,11 +69,12 @@ export default function AnnouncementsList() {
 
     try {
       const newStatus = !announcement.published
-      const updatedAnnouncement = await updateAnnouncement(announcement.id, {
+      const updatedAnnouncement = await updateAnnouncement({
+        ...announcement,
         published: newStatus,
         publishedAt: newStatus ? new Date().toISOString() : undefined
       })
-      setAnnouncements(announcements.map(a => 
+      setAnnouncements(announcements.map(a =>
         a.id === announcement.id ? updatedAnnouncement : a
       ))
     } catch (error) {
@@ -87,7 +88,7 @@ export default function AnnouncementsList() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+           <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -134,7 +135,7 @@ export default function AnnouncementsList() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+       <div className="bg-card shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {announcements.map((announcement) => (
             <li key={announcement.id} className="px-4 py-5 sm:px-6">
@@ -144,8 +145,13 @@ export default function AnnouncementsList() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {announcement.title}
                     </h2>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
-                      {announcement.priority}
+                    {announcement.pinned && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        📌 Pinned
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority || 'low')}`}>
+                      {announcement.priority || 'low'}
                     </span>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       announcement.published
@@ -155,10 +161,28 @@ export default function AnnouncementsList() {
                       {announcement.published ? 'Published' : 'Draft'}
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:gap-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Start: {format(new Date(announcement.startDate), 'MMM d, yyyy')}
+                  {announcement.subtitle && (
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {announcement.subtitle}
                     </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    {announcement.author && (
+                      <span>By {announcement.author.name}</span>
+                    )}
+                    {announcement.readTime && (
+                      <span>• {announcement.readTime} min read</span>
+                    )}
+                    {announcement.tags && announcement.tags.length > 0 && (
+                      <span>• {announcement.tags.slice(0, 3).join(', ')}</span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:gap-4">
+                    {announcement.startDate && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Start: {format(new Date(announcement.startDate), 'MMM d, yyyy')}
+                      </p>
+                    )}
                     {announcement.endDate && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         End: {format(new Date(announcement.endDate), 'MMM d, yyyy')}
@@ -193,11 +217,11 @@ export default function AnnouncementsList() {
               </div>
             </li>
           ))}
-          {announcements.length === 0 && (
-            <li className="px-4 py-5 sm:px-6 text-center text-gray-500 dark:text-gray-400">
-              No announcements found
-            </li>
-          )}
+           {announcements.length === 0 && (
+             <li className="px-4 py-5 sm:px-6 text-center text-muted-foreground">
+               No announcements found
+             </li>
+           )}
         </ul>
       </div>
 

@@ -1,0 +1,35 @@
+# robots.txt for iTalkDevs
+
+# Allow all crawlers to access the site
+User-agent: *
+Allow: /
+
+# Disallow admin and authentication routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+
+# Disallow user-specific pages that don't need indexing
+Disallow: /user/
+Disallow: /profile/
+Disallow: /manage/
+
+# Allow specific API endpoints that should be crawled (if any)
+# Allow: /api/public/
+
+# Sitemap location
+Sitemap: https://italkdevs.com/sitemap.xml
+
+# Crawl-delay for responsible crawling (optional)
+# Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /

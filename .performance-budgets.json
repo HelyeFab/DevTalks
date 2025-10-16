@@ -1,0 +1,60 @@
+{
+  "budgets": [
+    {
+      "resourceType": "script",
+      "budget": 600,
+      "warning": 400
+    },
+    {
+      "resourceType": "stylesheet",
+      "budget": 100,
+      "warning": 50
+    },
+    {
+      "resourceType": "image",
+      "budget": 200,
+      "warning": 100
+    },
+    {
+      "resourceType": "font",
+      "budget": 150,
+      "warning": 100
+    },
+    {
+      "resourceType": "total",
+      "budget": 1000,
+      "warning": 800
+    }
+  ],
+  "thresholds": {
+    "lcp": {
+      "good": 2500,
+      "poor": 4000
+    },
+    "fid": {
+      "good": 100,
+      "poor": 300
+    },
+    "cls": {
+      "good": 0.1,
+      "poor": 0.25
+    },
+    "fcp": {
+      "good": 1800,
+      "poor": 3000
+    },
+    "ttfb": {
+      "good": 800,
+      "poor": 1800
+    },
+    "inp": {
+      "good": 200,
+      "poor": 500
+    }
+  },
+  "notes": {
+    "units": "Budgets are in kilobytes (KB), thresholds are in milliseconds (ms) except CLS which is a score",
+    "updated": "2025-10-16",
+    "review": "Review and adjust budgets quarterly based on actual performance metrics"
+  }
+}

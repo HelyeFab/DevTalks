@@ -152,7 +152,7 @@ export default function BlogPostClient({ post }: Props) {
                 src={post.image}
                 alt={post.imageAlt || post.title}
                 fill
-                className="object-cover"
+                className="object-cover object-center-top"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
                 priority
               />

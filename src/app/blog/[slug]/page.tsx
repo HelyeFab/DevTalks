@@ -4,6 +4,10 @@ import logger from "@/lib/logger";
 import BlogPostClient from "./client";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { SITE_CONFIG } from "@/lib/seo/utils";
+import { generateBlogPostMetadata } from "@/lib/seo/meta-generator";
+import { generateBlogPostSchema, generateBreadcrumbSchema, toJsonLd } from "@/lib/seo/schema";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 // Explicitly mark this as a dynamic route
 export const dynamic = 'force-dynamic'
@@ -44,15 +48,10 @@ export async function generateMetadata({
       return { title: "Post Not Found" };
     }
 
-    return {
-      title: post.title,
-      description: post.excerpt,
-      openGraph: {
-        title: post.title,
-        description: post.excerpt,
-        images: post.image ? [post.image] : [],
-      },
-    };
+    // Use the comprehensive meta generator with dynamic OG images
+    return generateBlogPostMetadata(post, {
+      generateOGImage: true, // Use dynamic OG image generation
+    });
   } catch (error) {
     console.error("Error generating metadata:", error);
     return { title: "Error" };
@@ -98,7 +97,41 @@ export default async function BlogPost({
       hasImage: !!post.image,
     });
 
-    return <BlogPostClient post={post} />;
+    // Generate structured data
+    const blogPostSchema = generateBlogPostSchema(post)
+
+    // Generate breadcrumbs
+    const breadcrumbs = [
+      { name: 'Home', url: '/' },
+      { name: 'Blog', url: '/blog' },
+      { name: post.title, url: `/blog/${post.slug}` },
+    ]
+
+    const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs)
+
+    return (
+      <>
+        {/* Structured data - Blog Post */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toJsonLd(blogPostSchema) }}
+        />
+        {/* Structured data - Breadcrumbs */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
+        />
+
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Breadcrumbs */}
+          <div className="py-4">
+            <Breadcrumbs items={breadcrumbs} />
+          </div>
+
+          <BlogPostClient post={post} />
+        </div>
+      </>
+    );
   } catch (error) {
     console.error("Error in BlogPost page:", error);
     notFound();

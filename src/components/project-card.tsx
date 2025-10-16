@@ -1,29 +1,24 @@
-'use client'
-
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { Github, ExternalLink } from 'lucide-react'
 import type { Project } from '@/types/project'
+import { ProjectCardClient } from './project-card-client'
+import { generateShimmerDataURL } from '@/lib/image-optimization'
 
+// Server Component - renders project data and wraps with minimal Client Component for interactivity
 export function ProjectCard({ project }: { project: Project }) {
-  const router = useRouter()
-
-  const handleCardClick = () => {
-    router.push(`/projects/${project.slug}`)
-  }
-
   return (
-    <article 
-      onClick={handleCardClick}
-      className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform hover:-translate-y-1 cursor-pointer"
-    >
+    <ProjectCardClient slug={project.slug}>
       <div className="relative aspect-[16/9] w-full">
         <Image
           src={project.image}
           alt={project.title}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className="object-cover object-center-top transition-transform duration-300 group-hover:scale-105"
+          quality={85}
+          placeholder="blur"
+          blurDataURL={generateShimmerDataURL()}
+          loading="lazy"
         />
       </div>
       <div className="p-6">
@@ -46,34 +41,30 @@ export function ProjectCard({ project }: { project: Project }) {
         <div className="flex items-center gap-4">
           {project.githubUrl && (
             <a
+              data-card-link
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
               aria-label="View source on GitHub"
-              onClick={(e) => {
-                e.stopPropagation()
-              }}
             >
               <Github className="h-5 w-5" />
             </a>
           )}
           {project.liveUrl && (
             <a
+              data-card-link
               href={project.liveUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
               aria-label="View live project"
-              onClick={(e) => {
-                e.stopPropagation()
-              }}
             >
               <ExternalLink className="h-5 w-5" />
             </a>
           )}
         </div>
       </div>
-    </article>
+    </ProjectCardClient>
   )
 }

@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { isAdmin } from '@/lib/auth'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+// import { isAdmin } from '@/lib/auth' - unused
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { updateProfile } from 'firebase/auth'
 import { db } from '@/lib/firebase'
@@ -203,8 +203,8 @@ export default function UserProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -215,11 +215,11 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 max-w-6xl py-12">
       <h1 className="text-3xl font-bold mb-8 text-center">Your Profile</h1>
       
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
+        <div className="bg-card rounded-lg p-6 shadow-lg">
           <div className="flex items-center gap-6 mb-6">
             <div className="relative h-24 w-24 group">
               {user?.photoURL ? (
@@ -266,20 +266,20 @@ export default function UserProfile() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-900"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-input"
                     placeholder="Display Name"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => setIsEditingProfile(false)}
-                      className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      className="px-3 py-1 text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveProfile}
                       disabled={isSaving}
-                      className="px-3 py-1 text-sm bg-pink-600 hover:bg-pink-700 text-white rounded-lg disabled:opacity-50"
+                      className="px-3 py-1 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg disabled:opacity-50"
                     >
                       {isSaving ? 'Saving...' : 'Save'}
                     </button>
@@ -288,21 +288,21 @@ export default function UserProfile() {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <h2 className="text-xl font-semibold text-foreground">
                       {user?.displayName || 'User'}
                     </h2>
                     <button
                       onClick={() => setIsEditingProfile(true)}
-                      className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 mb-3">{user?.email}</p>
+                  <p className="text-muted-foreground mb-3">{user?.email}</p>
                   {!isEditingSocial && (
                     <button
                       onClick={() => setIsEditingSocial(true)}
-                      className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm"
                     >
                       <span>Edit Social Links</span>
                     </button>
@@ -314,10 +314,10 @@ export default function UserProfile() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Role
               </label>
-              <p className="text-gray-900 dark:text-white">
+              <p className="text-foreground">
                 {profileData?.isAdmin ? 'Admin' : 'User'}
               </p>
             </div>
@@ -330,9 +330,9 @@ export default function UserProfile() {
                 <div className="space-y-4">
                   {socialLinks.map(({ name, icon: Icon, label, placeholder }) => (
                     <div key={name} className="flex items-center gap-3">
-                      <Icon className="h-5 w-5 text-gray-500" />
+                      <Icon className="h-5 w-5 text-muted-foreground" />
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">
                           {label}
                         </label>
                         <input
@@ -340,7 +340,7 @@ export default function UserProfile() {
                           value={socialInputs[name] || ''}
                           onChange={(e) => handleSocialInputChange(name, e.target.value)}
                           placeholder={placeholder}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-900"
+                          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary bg-input"
                         />
                       </div>
                     </div>
@@ -348,20 +348,20 @@ export default function UserProfile() {
                   <div className="flex justify-end gap-3 mt-4">
                     <button
                       onClick={() => setIsEditingSocial(false)}
-                      className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      className="px-4 py-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveSocial}
                       disabled={isSaving}
-                      className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg disabled:opacity-50"
                     >
                       {isSaving ? 'Saving...' : 'Save'}
                     </button>
                   </div>
                   {saveError && (
-                    <p className="text-red-500 mt-2 text-sm">{saveError}</p>
+                    <p className="text-destructive mt-2 text-sm">{saveError}</p>
                   )}
                 </div>
               ) : (
@@ -374,19 +374,19 @@ export default function UserProfile() {
 
                     return (
                       <div key={name} className="flex items-center gap-3">
-                        <Icon className="h-5 w-5 text-gray-500" />
+                        <Icon className="h-5 w-5 text-muted-foreground" />
                         {url ? (
                           <a
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-pink-600 hover:text-pink-700 flex items-center gap-1"
+                            className="text-primary hover:text-primary/90 flex items-center gap-1"
                           >
                             {label}
                             <LinkIcon className="h-4 w-4" />
                           </a>
                         ) : (
-                          <span className="text-gray-500">Not set</span>
+                          <span className="text-muted-foreground">Not set</span>
                         )}
                       </div>
                     )
@@ -395,18 +395,18 @@ export default function UserProfile() {
               )}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-8 pt-6 border-t border-border">
               {user.email === ADMIN_EMAIL && !profileData?.isAdmin && (
                 <div>
                   <button
                     onClick={handleSetupAdmin}
                     disabled={isSettingUpAdmin}
-                    className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg disabled:opacity-50"
                   >
                     {isSettingUpAdmin ? 'Setting up...' : 'Setup Admin Profile'}
                   </button>
                   {adminSetupError && (
-                    <p className="text-red-500 mt-2 text-sm">{adminSetupError}</p>
+                    <p className="text-destructive mt-2 text-sm">{adminSetupError}</p>
                   )}
                 </div>
               )}

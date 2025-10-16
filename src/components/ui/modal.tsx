@@ -1,11 +1,14 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import FocusLock from 'react-focus-lock'
 
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
-  children: React.ReactNode
+  children: ReactNode
   title?: string
 }
 

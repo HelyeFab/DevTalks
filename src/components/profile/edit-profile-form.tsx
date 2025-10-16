@@ -122,7 +122,7 @@ export function EditProfileForm({ user, onClose, onUpdate }: EditProfileFormProp
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Profile Picture */}
       <div className="flex flex-col items-center">
-        <div 
+        <div
           onClick={handleImageClick}
           className="relative h-24 w-24 cursor-pointer group"
         >
@@ -131,7 +131,7 @@ export function EditProfileForm({ user, onClose, onUpdate }: EditProfileFormProp
             alt="Profile picture"
             width={96}
             height={96}
-            className="rounded-full object-cover"
+            className="rounded-full object-cover object-center-top"
           />
           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <span className="text-white text-sm">Change</span>
@@ -232,14 +232,14 @@ export function EditProfileForm({ user, onClose, onUpdate }: EditProfileFormProp
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-md"
+          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 rounded-md disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : 'Save Changes'}
         </button>

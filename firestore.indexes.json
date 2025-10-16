@@ -1,15 +1,15 @@
 {
   "indexes": [
     {
-      "collectionGroup": "comments",
+      "collectionGroup": "blog_posts",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "postId",
+          "fieldPath": "published",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "createdAt",
+          "fieldPath": "date",
           "order": "DESCENDING"
         }
       ]
@@ -23,7 +23,25 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "publishedAt",
+          "fieldPath": "upvotes",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "blog_posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "published",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
           "order": "DESCENDING"
         }
       ]
@@ -37,26 +55,44 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "pinned",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "startDate",
+          "fieldPath": "date",
           "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "projects",
+      "collectionGroup": "announcements",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "featured",
+          "fieldPath": "pinned",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "priority",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "createdAt",
+          "fieldPath": "date",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "announcements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "published",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endDate",
+          "order": "ASCENDING"
         }
       ]
     }

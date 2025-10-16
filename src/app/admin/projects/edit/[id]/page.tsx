@@ -41,7 +41,7 @@ export default function EditProjectPage() {
   const projectId = params.id as string
   const { user, loading, isAdmin } = useAuth()
   const router = useRouter()
-  const [project, setProject] = useState<Project | null>(null)
+  const [_project, setProject] = useState<Project | null>(null)
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [content, setContent] = useState('')

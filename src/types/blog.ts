@@ -3,6 +3,21 @@ export interface Author {
   email: string
   image?: string
   uid?: string
+  bio?: string
+  credentials?: string
+}
+
+export interface SEOMetadata {
+  metaTitle?: string
+  metaDescription?: string
+  focusKeyword?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogImage?: string
+  canonicalUrl?: string
+  keywords?: string[]
+  category?: string
+  schemaType?: 'Article' | 'BlogPosting' | 'NewsArticle' | 'TechArticle'
 }
 
 export interface BlogPost {
@@ -21,4 +36,6 @@ export interface BlogPost {
   publishedAt?: string
   upvotes?: number
   readTime?: number
+  // SEO Metadata
+  seo?: SEOMetadata
 }

@@ -44,7 +44,6 @@ export default function NewProject() {
   const [description, setDescription] = useState('')
   const [techInput, setTechInput] = useState('')
   const [technologies, setTechnologies] = useState<Technology[]>([])
-  const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [featured, setFeatured] = useState(false)
   const [image, setImage] = useState('')

@@ -15,12 +15,13 @@ const DEFAULT_AVATAR = '/images/default-avatar.svg'
 interface Props {
   comment: Comment
   currentUser: User | null
+  postId: string
   onReply: (parentId: string, content: string) => Promise<void>
   onEdit: (commentId: string, content: string) => Promise<void>
   onDelete: (commentId: string) => void
 }
 
-export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }: Props) {
+export function CommentItem({ comment, currentUser, postId, onReply, onEdit, onDelete }: Props) {
   const [isReplying, setIsReplying] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [showActions, setShowActions] = useState(false)
@@ -93,7 +94,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
             alt={comment.author.name}
             width={40}
             height={40}
-            className="rounded-full"
+            className="rounded-full object-cover object-center-top"
           />
         </div>
 
@@ -111,7 +112,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
                 </span>
               )}
             </div>
-            
+
             {/* Actions dropdown */}
             {(currentUser && (isAuthor || isAdmin)) && (
               <div className="relative">
@@ -121,7 +122,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
-                
+
                 {showActions && (
                   <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                     {isAuthor && (
@@ -155,7 +156,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
           {/* Comment text */}
           {isEditing ? (
             <CommentForm
-              postId={comment.postId}
+              postId={postId}
               initialValue={comment.content}
               onSubmit={handleEdit}
               onCancel={() => setIsEditing(false)}
@@ -182,7 +183,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
           {isReplying && (
             <div className="mt-4">
               <CommentForm
-                postId={comment.postId}
+                postId={postId}
                 parentId={comment.id}
                 onSubmit={handleReply}
                 onCancel={() => setIsReplying(false)}
@@ -218,7 +219,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
                   handleDelete()
                   setShowConfirmDelete(false)
                 }}
-                className="px-4 py-2 text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 dark:bg-pink-700 dark:hover:bg-pink-800 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md"
               >
                 Delete
               </button>
@@ -235,6 +236,7 @@ export function CommentItem({ comment, currentUser, onReply, onEdit, onDelete }:
               key={reply.id}
               comment={reply}
               currentUser={currentUser}
+              postId={postId}
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}

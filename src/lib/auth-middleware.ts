@@ -1,13 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { initAdmin } from './firebase-admin'
-
-const { auth } = initAdmin()
+import { verifyIdToken } from './server/firebase-admin'
+import { isUserAdmin } from './server/admin-check'
 
 export interface AuthContext {
-  userId: string;
-  email: string | undefined;
-  name: string | undefined;
-  isAdmin: boolean;
+  userId: string
+  email: string | undefined
+  name: string | undefined
+  isAdmin: boolean
 }
 
 /**
@@ -25,13 +24,16 @@ export async function verifyAuthToken(request: NextRequest): Promise<AuthContext
   // Verify the token
   const token = authHeader.split('Bearer ')[1]
   try {
-    const decodedToken = await auth.verifyIdToken(token)
+    const decodedToken = await verifyIdToken(token)
+
+    // Check admin status using custom claims
+    const isAdmin = await isUserAdmin(decodedToken.uid)
 
     return {
       userId: decodedToken.uid,
       email: decodedToken.email,
-      name: decodedToken.name,
-      isAdmin: decodedToken.admin === true
+      name: decodedToken.name ?? decodedToken.email?.split('@')[0],
+      isAdmin
     }
   } catch (error) {
     console.error('Token verification failed:', error)

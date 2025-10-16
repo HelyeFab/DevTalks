@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAllPosts, getPostBySlug, createPost } from '@/lib/blog';
 import { getPaginationFromRequest } from '@/lib/pagination';
 import { getCacheSettingsForPublicData } from '@/lib/cache-control';

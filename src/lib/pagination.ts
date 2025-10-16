@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { DocumentSnapshot } from 'firebase/firestore';
 
 /**
  * Interface for pagination parameters
@@ -8,6 +9,16 @@ export interface PaginationParams {
   limit: number;
   orderBy?: string;
   orderDirection?: 'asc' | 'desc';
+}
+
+/**
+ * Interface for cursor-based pagination parameters
+ */
+export interface CursorPaginationParams {
+  limit: number;
+  orderBy?: string;
+  orderDirection?: 'asc' | 'desc';
+  startAfter?: DocumentSnapshot; // Firestore document snapshot for cursor
 }
 
 /**
@@ -22,6 +33,16 @@ export interface PaginationResult<T> {
     totalPages: number;
     hasMore: boolean;
   };
+}
+
+/**
+ * Interface for cursor-based pagination results
+ */
+export interface CursorPaginationResult<T> {
+  items: T[];
+  lastVisible: DocumentSnapshot | null;
+  hasMore: boolean;
+  count: number;
 }
 
 /**
@@ -95,3 +116,31 @@ export function getPaginationMeta(
     hasMore: page < totalPages
   };
 }
+
+/**
+ * Example cursor-based pagination usage:
+ *
+ * ```typescript
+ * import { query, collection, orderBy, limit, startAfter, getDocs } from 'firebase/firestore'
+ *
+ * export async function getPostsWithCursor(
+ *   pageSize: number = 10,
+ *   lastDoc?: DocumentSnapshot
+ * ): Promise<CursorPaginationResult<BlogPost>> {
+ *   const postsRef = collection(db, 'blog_posts')
+ *   let q = query(postsRef, orderBy('date', 'desc'), limit(pageSize + 1))
+ *
+ *   if (lastDoc) {
+ *     q = query(postsRef, orderBy('date', 'desc'), startAfter(lastDoc), limit(pageSize + 1))
+ *   }
+ *
+ *   const snapshot = await getDocs(q)
+ *   const items = snapshot.docs.slice(0, pageSize).map(doc => convertPost(doc.id, doc.data()))
+ *   const hasMore = snapshot.docs.length > pageSize
+ *   const lastVisible = hasMore ? snapshot.docs[pageSize - 1] : null
+ *
+ *   return { items, lastVisible, hasMore, count: items.length }
+ * }
+ * ```
+ */
+export const CURSOR_PAGINATION_EXAMPLE = true;

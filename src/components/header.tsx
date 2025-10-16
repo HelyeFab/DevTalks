@@ -84,7 +84,7 @@ export function Header() {
         <img
           src={user.photoURL}
           alt={user.displayName || 'User avatar'}
-          className="h-8 w-8 rounded-full object-cover"
+          className="h-8 w-8 rounded-full object-cover object-center-top"
           onError={() => {
             console.log('Failed to load profile image:', user.photoURL)
             setImageError(true)
@@ -187,11 +187,11 @@ export function Header() {
             href="/"
             className="flex items-center gap-4 group"
           >
-            <span className="font-lobster text-4xl tracking-wide text-foreground group-hover:text-primary transition-colors">
+            <span className="font-mulish text-4xl font-semibold tracking-wide text-foreground group-hover:text-primary transition-colors">
               iTalkDevs
             </span>
             <div className="flex items-center justify-center w-10 h-10 bg-primary group-hover:bg-primary-hover rounded-lg transition-colors">
-              <span className="font-lobster text-base tracking-wider text-primary-foreground">
+              <span className="font-mulish text-base font-semibold tracking-wider text-primary-foreground">
                 iTD
               </span>
             </div>
@@ -307,8 +307,8 @@ export function Header() {
                 </div>
               </nav>
             </div>
-            <div 
-              className="fixed inset-0 bg-black/20 md:hidden" 
+            <div
+              className="fixed inset-0 bg-black/20 md:hidden"
               style={{ top: '73px' }}
               onClick={() => setMobileMenuOpen(false)}
               aria-hidden="true"

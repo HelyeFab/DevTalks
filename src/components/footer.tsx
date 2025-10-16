@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { Github, Linkedin, Mail } from 'lucide-react'
 
+// Server Component - no interactivity needed, just static links
 const socialLinks = [
   {
     name: 'GitHub',

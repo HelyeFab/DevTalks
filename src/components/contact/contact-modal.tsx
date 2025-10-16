@@ -187,7 +187,7 @@ export function ContactModal() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md"
               disabled={isLoading}
             >
               Cancel
@@ -195,7 +195,7 @@ export function ContactModal() {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 rounded-md disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md disabled:opacity-50 flex items-center gap-2"
             >
               {isLoading ? (
                 <>
