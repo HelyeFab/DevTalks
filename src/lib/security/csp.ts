@@ -164,6 +164,8 @@ function getDevelopmentDirectives(nonce?: string): CSPDirective {
       "'self'",
       'https://www.google.com', // For reCAPTCHA
       'https://accounts.google.com', // For Google Sign-In
+      'https://*.firebaseapp.com', // Allow Firebase Auth iframe
+      'https://*.firebase.google.com', // Allow Firebase services iframes
     ],
     'worker-src': [
       "'self'",
@@ -204,16 +206,17 @@ function getProductionDirectives(nonce?: string): CSPDirective {
     'style-src': [
       "'self'",
       ...nonceDirective,
+      "'unsafe-inline'", // Required for Next.js dynamic inline styles
       'https://fonts.googleapis.com',
-      // Allow inline styles with nonce only
     ],
     'style-src-elem': [
       "'self'",
       ...nonceDirective,
+      "'unsafe-inline'", // Required for Next.js CSS-in-JS and dynamic styles
       'https://fonts.googleapis.com',
     ],
     'style-src-attr': [
-      "'unsafe-inline'", // Required for some React inline styles
+      "'unsafe-inline'", // Required for React inline styles (style={{...}})
     ],
     'font-src': [
       "'self'",
@@ -224,6 +227,8 @@ function getProductionDirectives(nonce?: string): CSPDirective {
       "'self'",
       'https://www.google.com',
       'https://accounts.google.com',
+      'https://*.firebaseapp.com', // Allow Firebase Auth iframe
+      'https://*.firebase.google.com', // Allow Firebase services iframes
     ],
     'worker-src': [
       "'self'",

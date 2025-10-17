@@ -49,6 +49,7 @@ function getBaseSecurityHeaders(): Record<string, string> {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
 
     // Prevent clients from accessing certain browser features and APIs
+    // Note: Only use standardized features supported by browsers
     'Permissions-Policy': [
       'camera=()', // Deny camera access
       'microphone=()', // Deny microphone access
@@ -59,7 +60,7 @@ function getBaseSecurityHeaders(): Record<string, string> {
       'magnetometer=()', // Deny magnetometer
       'gyroscope=()', // Deny gyroscope
       'accelerometer=()', // Deny accelerometer
-      'ambient-light-sensor=()', // Deny ambient light sensor
+      // Removed 'ambient-light-sensor' - not a standard feature name
     ].join(', '),
 
     // Control DNS prefetching
