@@ -25,21 +25,24 @@ export function BlogPostCard({ post }: { post: BlogPost }) {
           />
         </div>
         <div className="p-6">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
-            <time dateTime={post.date}>
-              {format(new Date(post.date), 'MMMM d, yyyy')}
-            </time>
-            <span className="hidden sm:inline">•</span>
-            <span>{post.author.name}</span>
-            {post.readTime && (
-              <>
-                <span className="hidden sm:inline">•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {formatReadTime(post.readTime)}
-                </span>
-              </>
-            )}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <div className="flex items-center gap-2">
+              <span>{post.author.name}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm">
+              <time dateTime={post.date}>
+                {format(new Date(post.date), 'MMMM d, yyyy')}
+              </time>
+              {post.readTime && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {formatReadTime(post.readTime)}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <h2 className="text-2xl font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {post.title}

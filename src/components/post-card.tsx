@@ -67,8 +67,8 @@ export function PostCard({ post }: Props) {
               )}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {post.author.image && (
                   <Image
@@ -81,7 +81,7 @@ export function PostCard({ post }: Props) {
                     loading="lazy"
                   />
                 )}
-                <span className="font-semibold">{post.author.name}</span>
+                <span className="font-semibold text-sm">{post.author.name}</span>
               </div>
 
               <div className="flex items-center gap-1" data-card-link>
@@ -95,13 +95,13 @@ export function PostCard({ post }: Props) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <time dateTime={post.date} className="text-sm">{formattedDate}</time>
+            <div className="flex items-center gap-2 text-xs">
+              <time dateTime={post.date}>{formattedDate}</time>
               {post.readTime && (
                 <>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="flex items-center gap-1 text-sm">
-                    <Clock className="h-4 w-4" />
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
                     {formatReadTime(post.readTime)}
                   </span>
                 </>
