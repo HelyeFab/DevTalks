@@ -67,7 +67,7 @@ export function PostCard({ post }: Props) {
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 {post.author.image && (
@@ -99,7 +99,7 @@ export function PostCard({ post }: Props) {
               <time dateTime={post.date} className="text-sm">{formattedDate}</time>
               {post.readTime && (
                 <>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span className="flex items-center gap-1 text-sm">
                     <Clock className="h-4 w-4" />
                     {formatReadTime(post.readTime)}

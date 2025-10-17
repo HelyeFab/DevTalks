@@ -25,15 +25,15 @@ export function BlogPostCard({ post }: { post: BlogPost }) {
           />
         </div>
         <div className="p-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
             <time dateTime={post.date}>
               {format(new Date(post.date), 'MMMM d, yyyy')}
             </time>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>{post.author.name}</span>
             {post.readTime && (
               <>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   {formatReadTime(post.readTime)}
