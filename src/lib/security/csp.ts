@@ -211,8 +211,7 @@ function getProductionDirectives(nonce?: string): CSPDirective {
     ],
     'style-src-elem': [
       "'self'",
-      ...nonceDirective,
-      "'unsafe-inline'", // Required for Next.js CSS-in-JS and dynamic styles
+      "'unsafe-inline'", // Required for React inline styles and Next.js CSS-in-JS
       'https://fonts.googleapis.com',
     ],
     'style-src-attr': [
