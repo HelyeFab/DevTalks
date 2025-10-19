@@ -9,6 +9,12 @@ import { Toaster } from 'sonner'
 import { SITE_CONFIG } from '@/lib/seo/utils'
 import { ResourceHints } from '@/lib/performance/resource-hints'
 import { WebVitalsReporter } from '@/components/web-vitals-reporter'
+import { logVersionInfo } from '@/lib/version'
+
+// Log version information on startup
+if (typeof window === 'undefined') {
+  logVersionInfo()
+}
 
 const mulish = localFont({
   src: [
