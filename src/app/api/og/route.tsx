@@ -179,7 +179,7 @@ async function generatePostImage(
                     fontWeight: 'bold',
                   }}
                 >
-                  {author || 'iTalkDevs'}
+                  {author || 'DevTalks'}
                 </div>
                 {date && (
                   <div

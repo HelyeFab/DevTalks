@@ -12,7 +12,6 @@ export default function SignIn() {
   const [error, setError] = useState('')
   const router = useRouter()
   const { user, loading, signInWithGoogle } = useAuth()
-  const auth = getAuth()
 
   useEffect(() => {
     if (!loading && user) {
@@ -25,6 +24,7 @@ export default function SignIn() {
     setError('')
 
     try {
+      const auth = getAuth()
       await signInWithEmailAndPassword(auth, email, password)
     } catch (error) {
       console.error('Email sign in error:', error)
@@ -58,7 +58,7 @@ export default function SignIn() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Sign in to iTalkDevs
+            Sign in to DevTalks
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Join our community of developers

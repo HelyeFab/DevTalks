@@ -72,9 +72,9 @@ export function generateOrganizationSchema(): Organization {
     logo: `${SITE_CONFIG.url}/images/logo.png`,
     sameAs: [
       // Add social media profiles here
-      // 'https://twitter.com/italkdevs',
-      // 'https://github.com/italkdevs',
-      // 'https://linkedin.com/company/italkdevs'
+      // 'https://twitter.com/devtalks',
+      // 'https://github.com/devtalks',
+      // 'https://linkedin.com/company/devtalks'
     ],
     description: SITE_CONFIG.description
   }

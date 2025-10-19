@@ -8,6 +8,8 @@ import { serializeBlogPosts } from '@/utils/serialization'
 import { SITE_CONFIG } from '@/lib/seo/utils'
 import { generateWebSiteSchema, generateOrganizationSchema, generateCollectionPageSchema, combineSchemas, toJsonLd } from '@/lib/seo/schema'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Home',
   description: SITE_CONFIG.description,

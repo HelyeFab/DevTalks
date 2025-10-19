@@ -1,0 +1,78 @@
+
+> personal-website-next@0.1.0 build
+> next build --no-lint
+
+ ⚠ Linting is disabled.
+   ▲ Next.js 15.5.6
+   - Experiments (use with caution):
+     · serverActions
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 7.1s
+   Skipping validation of types
+   Collecting page data ...
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+[BUILD] Skipping Firebase initialization during build phase
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Using Firebase Admin mock implementation during build
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+[BUILD] Using Firebase Admin mock implementation during build
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+[BUILD] Using Firebase Admin mock implementation during build
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+FIREBASE_PROJECT_ID is not set in environment variables
+FIREBASE_CLIENT_EMAIL is not set in environment variables
+FIREBASE_PRIVATE_KEY is not set in environment variables
+   Generating static pages (0/25) ...
+[BUILD] Skipping Firebase initialization during build phase
+[BUILD] Skipping Firebase initialization during build phase
+   Generating static pages (6/25) 
+Error occurred prerendering page "/auth/signin". Read more: https://nextjs.org/docs/messages/prerender-error
+Error [FirebaseError]: Firebase: No Firebase App '[DEFAULT]' has been created - call initializeApp() first (app/no-app).
+    at B (.next/server/chunks/6868.js:46:41731)
+    at bB (.next/server/chunks/6868.js:22:96996)
+    at q (.next/server/app/auth/signin/page.js:1:4197) {
+  code: 'app/no-app',
+  customData: [Object],
+  digest: '215462780'
+}
+Export encountered an error on /auth/signin/page: /auth/signin, exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null

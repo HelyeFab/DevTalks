@@ -5,12 +5,12 @@
 
 // Default site configuration - can be moved to env variables
 export const SITE_CONFIG = {
-  name: 'iTalkDevs',
-  title: 'iTalkDevs - Software Development Blog & Community',
+  name: 'DevTalks',
+  title: 'DevTalks - Software Development Blog & Community',
   description: 'A blog and community for software developers. Explore articles on web development, programming, and technology.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://italkdevs.com',
-  author: 'iTalkDevs Team',
-  twitterHandle: '@italkdevs',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://devtalks.com',
+  author: 'DevTalks Team',
+  twitterHandle: '@devtalks',
   locale: 'en_US',
   type: 'website',
 } as const

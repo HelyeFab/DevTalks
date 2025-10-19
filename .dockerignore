@@ -1,0 +1,18 @@
+# Generated .dockerignore
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.production.local
+.env.staging.local
+Dockerfile
+.dockerignore
+docker-compose.yml
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~
+

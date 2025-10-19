@@ -66,14 +66,23 @@ export function initializeFirebaseAdmin(): AdminServices {
   const isValid = validateEnvironment()
 
   if (!isValid) {
+    // During Next.js build, skip Firebase initialization
+    if (process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.NODE_ENV === 'development') {
+      console.warn('[BUILD/DEV] Firebase Admin SDK not configured, skipping')
+      // Return empty mock services to prevent build errors
+      return {
+        app: null,
+        auth: {} as Auth,
+        db: {} as Firestore,
+        isAvailable: false
+      }
+    }
+
     if (process.env.NODE_ENV === 'production') {
       throw new Error('Firebase Admin SDK is not properly configured')
     }
 
-    // In development, we might use mock implementations
-    console.warn('[DEV] Firebase Admin SDK not configured, using development mode')
-    // Return mock services for development
-    // This should be handled by the calling code
     throw new Error('Firebase Admin SDK not configured')
   }
 

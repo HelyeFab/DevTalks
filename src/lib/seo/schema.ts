@@ -46,9 +46,9 @@ export function generateOrganizationSchema(): OrganizationSchema {
     description: SITE_CONFIG.description,
     sameAs: [
       // Add social media URLs here when available
-      // 'https://twitter.com/italkdevs',
-      // 'https://github.com/italkdevs',
-      // 'https://linkedin.com/company/italkdevs'
+      // 'https://twitter.com/devtalks',
+      // 'https://github.com/devtalks',
+      // 'https://linkedin.com/company/devtalks'
     ].filter(Boolean),
   }
 }

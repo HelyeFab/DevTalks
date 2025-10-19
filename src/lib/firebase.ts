@@ -1,7 +1,7 @@
-import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
-import { getStorage } from 'firebase/storage'
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
+import { getFirestore, Firestore } from 'firebase/firestore'
+import { getAuth, Auth } from 'firebase/auth'
+import { getStorage, FirebaseStorage } from 'firebase/storage'
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics'
 
 const firebaseConfig = {
@@ -14,16 +14,36 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-const db = getFirestore(app)
-const auth = getAuth(app)
-const storage = getStorage(app)
+// Check if we're in a build environment
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+                    process.env.NEXT_PHASE === 'phase-production-server'
 
-// Initialize Analytics only in browser
+// Check if Firebase config is valid
+const hasValidConfig = firebaseConfig.apiKey && firebaseConfig.projectId
+
+// Initialize Firebase only if not in build phase and config is valid
+let app: FirebaseApp | undefined
+let db: Firestore | undefined
+let auth: Auth | undefined
+let storage: FirebaseStorage | undefined
 let analytics: Analytics | undefined
-if (typeof window !== 'undefined') {
-  isSupported().then(yes => yes && (analytics = getAnalytics(app)))
+
+if (!isBuildTime && hasValidConfig) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+    db = getFirestore(app)
+    auth = getAuth(app)
+    storage = getStorage(app)
+
+    // Initialize Analytics only in browser
+    if (typeof window !== 'undefined') {
+      isSupported().then(yes => yes && (analytics = getAnalytics(app!)))
+    }
+  } catch (error) {
+    console.error('Failed to initialize Firebase:', error)
+  }
+} else if (isBuildTime) {
+  console.log('[BUILD] Skipping Firebase initialization during build phase')
 }
 
 export { app, db, auth, storage, analytics }

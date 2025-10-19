@@ -12,6 +12,11 @@ export async function validateRequestBody<T>(
   schema: z.ZodType<T>
 ): Promise<{ success: true; data: T } | { success: false; error: NextResponse }> {
   try {
+    // During build, skip validation
+    if (!req || !req.json) {
+      throw new Error('No request body');
+    }
+
     // Parse the request body
     const body = await req.json();
 

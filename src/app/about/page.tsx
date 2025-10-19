@@ -7,6 +7,8 @@ import { generateProfileMetadata } from '@/lib/seo/meta-generator'
 import { generateAboutPageSchema, toJsonLd } from '@/lib/seo/schema'
 import { Breadcrumbs } from '@/components/breadcrumbs'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = generateProfileMetadata({
   name: 'Emmanuel Fabiani',
   bio: 'Software Engineer, Certified Salesforce Administrator, and Computer Science student passionate about web development and technology. Experienced in React, Next.js, TypeScript, and modern web technologies.',

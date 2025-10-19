@@ -188,11 +188,11 @@ export function Header() {
             className="flex items-center gap-4 group"
           >
             <span className="hidden md:block font-mulish text-4xl font-semibold tracking-wide text-foreground group-hover:text-primary transition-colors">
-              iTalkDevs
+              DevTalks
             </span>
             <div className="flex items-center justify-center w-10 h-10 bg-primary group-hover:bg-primary-hover rounded-lg transition-colors">
               <span className="font-mulish text-base font-semibold tracking-wider text-primary-foreground">
-                iTD
+                DT
               </span>
             </div>
           </Link>

@@ -100,7 +100,7 @@ async function checkDatabase(): Promise<{
   const startTime = Date.now();
 
   try {
-    const { db, isAvailable } = initAdmin();
+    const { adminDb, isAvailable } = initAdmin();
 
     if (!isAvailable) {
       // In development mode with mock DB
@@ -112,7 +112,7 @@ async function checkDatabase(): Promise<{
 
     // Try to perform a simple operation
     // Note: Mock DB doesn't support limit, so we just check collection access
-    const healthRef = db.collection('health_check');
+    const healthRef = adminDb.collection('health_check');
     if (typeof healthRef.limit === 'function') {
       await healthRef.limit(1).get();
     }

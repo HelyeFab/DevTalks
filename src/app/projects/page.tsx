@@ -6,6 +6,8 @@ import { SITE_CONFIG, getCanonicalUrl } from '@/lib/seo/utils'
 import { generateCollectionPageSchema, toJsonLd } from '@/lib/seo/schema'
 import { Breadcrumbs } from '@/components/breadcrumbs'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Projects',
   description: 'Explore our showcase of AI applications, web development projects, and innovative technology solutions.',
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: SITE_CONFIG.locale,
     url: getCanonicalUrl('projects'),
-    title: 'Projects | iTalkDevs',
+    title: 'Projects | DevTalks',
     description: 'Explore our showcase of AI applications, web development projects, and innovative technology solutions.',
     siteName: SITE_CONFIG.name,
     images: [
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
         url: `${SITE_CONFIG.url}/api/og?type=projects&title=${encodeURIComponent('Projects Showcase')}`,
         width: 1200,
         height: 630,
-        alt: 'Projects | iTalkDevs',
+        alt: 'Projects | DevTalks',
         type: 'image/png',
       },
     ],
@@ -40,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: SITE_CONFIG.twitterHandle,
     creator: SITE_CONFIG.twitterHandle,
-    title: 'Projects | iTalkDevs',
+    title: 'Projects | DevTalks',
     description: 'Explore our showcase of AI applications, web development projects, and innovative technology solutions.',
     images: [
       {

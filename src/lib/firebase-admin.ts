@@ -47,16 +47,21 @@ const serviceAccount = isFirebaseAdminAvailable ? {
 
 // Flag to indicate if we're in a development environment
 const isDevelopment = process.env.NODE_ENV === 'development';
+// Check if we're in build phase
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+                    process.env.NEXT_PHASE === 'phase-production-server';
 
 function getFirebaseAdminApp() {
   // If Firebase Admin is not properly configured
   if (!isFirebaseAdminAvailable) {
-    if (isDevelopment) {
+    if (isDevelopment || isBuildTime) {
       // Use a simpler message in development - this may appear during HMR but is expected
       if (process.env.NODE_ENV === 'development') {
         // We don't try to deduplicate logs since HMR will reset module state anyway
         // Just make it clear this is normal in development mode
         console.log('[DEV MODE] Using Firebase Admin mock implementation (safe to ignore in development)');
+      } else if (isBuildTime) {
+        console.log('[BUILD] Using Firebase Admin mock implementation during build');
       } else {
         console.warn('Firebase Admin is not properly configured. Check environment variables.');
       }
@@ -85,8 +90,8 @@ function getFirebaseAdminApp() {
       console.error('Error initializing Firebase Admin:', error);
       isFirebaseAdminAvailable = false;
 
-      if (isDevelopment) {
-        console.warn('Continuing with mock implementation for development.');
+      if (isDevelopment || isBuildTime) {
+        console.warn('Continuing with mock implementation for development/build.');
         return null;
       }
 
@@ -466,12 +471,12 @@ const mockAuth = {
 export function initAdmin() {
   const app = getFirebaseAdminApp();
 
-  if (!app && isDevelopment) {
-    // Development mode message has already been shown above, no need to log again
+  if (!app && (isDevelopment || isBuildTime)) {
+    // Development or build mode message has already been shown above, no need to log again
     return {
       app: null,
-      auth: mockAuth,
-      db: mockDb,
+      adminAuth: mockAuth,
+      adminDb: mockDb,
       isAvailable: false
     };
   }
@@ -485,8 +490,8 @@ export function initAdmin() {
   console.log('Firebase Admin services initialized successfully');
   return {
     app,
-    auth,
-    db,
+    adminAuth: auth,
+    adminDb: db,
     isAvailable: true
   };
 }

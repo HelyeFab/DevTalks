@@ -1,0 +1,31 @@
+
+> personal-website-next@0.1.0 build
+> next build --no-lint
+
+ ⚠ Linting is disabled.
+   ▲ Next.js 15.5.6
+   - Experiments (use with caution):
+     · serverActions
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 23.7s
+   Skipping validation of types
+   Collecting page data ...
+Error [FirebaseError]: Firebase: Error (auth/invalid-api-key).
+    at s (.next/server/chunks/8241.js:1:94552)
+    at t (.next/server/chunks/8241.js:1:94600)
+    at e.instanceFactory (.next/server/chunks/8241.js:1:145997)
+    at g.getOrInitializeService (.next/server/chunks/8241.js:1:44785)
+    at g.initialize (.next/server/chunks/8241.js:1:44173)
+    at aP (.next/server/chunks/8241.js:1:133637)
+    at bo (.next/server/chunks/8241.js:1:146666)
+    at 44979 (.next/server/app/api/blog/route.js:1:11732)
+    at c (.next/server/webpack-runtime.js:1:128)
+    at 14250 (.next/server/app/api/blog/route.js:1:577) {
+  code: 'auth/invalid-api-key',
+  customData: [Object]
+}
+
+> Build error occurred
+[Error: Failed to collect page data for /api/blog] { type: 'Error' }
