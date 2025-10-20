@@ -119,6 +119,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy SSL fix server startup script
+COPY --chown=nextjs:nodejs server-ssl-fix.js ./
+
 # Switch to non-root user
 USER nextjs
 
@@ -146,5 +149,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 # CRITICAL: NEVER include these in the Dockerfile or Docker image!
 # ============================================================================
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with SSL/TLS fix
+CMD ["node", "server-ssl-fix.js"]
