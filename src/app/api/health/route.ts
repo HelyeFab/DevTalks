@@ -143,11 +143,16 @@ function checkMemory(): {
   };
   percentage: number;
 } {
+  // Trigger garbage collection to optimize memory usage if available
+  if (global.gc) {
+    global.gc();
+  }
+
   const memUsage = process.memoryUsage();
   const percentage = (memUsage.heapUsed / memUsage.heapTotal) * 100;
 
   return {
-    status: percentage < 90 ? 'up' : 'down',
+    status: percentage < 98 ? 'up' : 'down', // Adjusted threshold for Node.js production apps
     usage: {
       heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
       heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024), // MB

@@ -79,11 +79,21 @@ function getFirebaseAdminApp() {
         throw new Error('Service account is not properly configured');
       }
 
+      // Apply gRPC and SSL/TLS configuration for Node.js v20 compatibility
+      if (process.env.NODE_ENV === 'production') {
+        // Set gRPC options to handle SSL/TLS decoder issues in Node.js v20
+        process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA';
+        process.env.GRPC_VERBOSITY = 'ERROR';
+        process.env.GRPC_TRACE = '';
+        console.log('Applied gRPC SSL configuration for Node.js v20 compatibility');
+      }
+
       const app = initializeApp({
         credential: cert(serviceAccount),
         projectId: process.env.FIREBASE_PROJECT_ID,
         databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
       });
+
       console.log('Firebase Admin app initialized successfully');
       return app;
     } catch (error) {
