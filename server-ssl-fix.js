@@ -36,5 +36,5 @@ if (process.env.NODE_ENV === 'production') {
   console.log('✅ SSL/TLS compatibility fixes applied');
 }
 
-// Start Next.js server
-require('next/dist/server/next-start');
+// Start Next.js server (standalone mode uses server.js)
+require('./server.js');
