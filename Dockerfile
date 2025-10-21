@@ -27,9 +27,11 @@
 # ============================================================================
 # Stage 1: Dependencies
 # ============================================================================
-FROM node:18-alpine AS deps
+FROM node:18-slim AS deps
 
-RUN apk add --no-cache libc6-compat
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -42,7 +44,7 @@ RUN npm ci
 # ============================================================================
 # Stage 2: Builder
 # ============================================================================
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
@@ -97,12 +99,14 @@ RUN npm run build || \
 # ============================================================================
 # Stage 3: Runner (Production)
 # ============================================================================
-FROM node:18-alpine AS runner
+FROM node:18-slim AS runner
 
 WORKDIR /app
 
 # Install curl for health checks
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set production environment
 ENV NODE_ENV=production \
@@ -110,8 +114,8 @@ ENV NODE_ENV=production \
     PORT=3000
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy necessary files from builder
 # Standalone mode includes minimal files needed to run
