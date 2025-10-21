@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllPosts, getPostBySlug, createPost } from '@/lib/blog';
+import { getAllPosts, getPostBySlug, createPost } from '@/lib/blog-server';
 import { getPaginationFromRequest } from '@/lib/pagination';
 import { getCacheSettingsForPublicData } from '@/lib/cache-control';
 import { blogPostSchema } from '@/lib/validation';

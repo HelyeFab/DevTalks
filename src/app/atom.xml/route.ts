@@ -4,7 +4,7 @@
  * https://validator.w3.org/feed/docs/atom.html
  */
 
-import { getAllPosts } from '@/lib/blog'
+import { getAllPosts } from '@/lib/blog-server'
 import { SITE_CONFIG } from '@/lib/seo/utils'
 import type { BlogPost } from '@/types/blog'
 

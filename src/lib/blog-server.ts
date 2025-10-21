@@ -2,30 +2,13 @@
  * Server-only blog operations
  *
  * This module contains all server-side blog post operations that interact
- * directly with Firestore. It should NEVER be imported in client components.
+ * directly with Firestore using Firebase Admin SDK.
+ * It should NEVER be imported in client components.
  */
 
 import 'server-only'
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  FirestoreError,
-  limit,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  DocumentData,
-  setDoc
-} from 'firebase/firestore'
-import { db } from './firebase'
-import { getAuth } from 'firebase/auth'
+import { getAdminDb } from './server/firebase-admin'
 import { calculateReadTime } from '@/utils/read-time'
 import type { BlogPost, Author } from '@/types/blog'
 import { PaginationParams, PaginationResult, DEFAULT_PAGINATION, paginateArray } from './pagination'
@@ -37,7 +20,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 export type { BlogPost, Author }
 
 class BlogError extends Error {
-  constructor(message: string, public originalError?: FirestoreError) {
+  constructor(message: string, public originalError?: unknown) {
     super(message)
     this.name = 'BlogError'
   }
@@ -45,17 +28,17 @@ class BlogError extends Error {
 
 const COLLECTION_NAME = 'blog_posts'
 
-// Helper function to convert Firestore data to BlogPost
-function convertPost(id: string, data: DocumentData): BlogPost {
+// Helper function to convert Firestore Admin SDK data to BlogPost
+function convertPost(id: string, data: FirebaseFirestore.DocumentData): BlogPost {
   // Ensure all date fields are converted to ISO strings
-  const date = data.date instanceof Timestamp
-    ? data.date.toDate().toISOString()
+  const date = data.date?._seconds
+    ? new Date(data.date._seconds * 1000).toISOString()
     : typeof data.date === 'string'
       ? data.date
       : new Date().toISOString()
 
-  const publishedAt = data.publishedAt instanceof Timestamp
-    ? data.publishedAt.toDate().toISOString()
+  const publishedAt = data.publishedAt?._seconds
+    ? new Date(data.publishedAt._seconds * 1000).toISOString()
     : typeof data.publishedAt === 'string'
       ? data.publishedAt
       : undefined
@@ -90,34 +73,29 @@ function convertPost(id: string, data: DocumentData): BlogPost {
   return post
 }
 
-// Server-side functions
-export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> {
+// Server-side functions using Firebase Admin SDK
+export async function createPost(post: Omit<BlogPost, 'id'>, userUid?: string): Promise<BlogPost> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const auth = getAuth()
-    const user = auth.currentUser
-
-    if (!user) {
+    if (!userUid) {
       throw new BlogError('User must be authenticated to create posts')
     }
 
     // Check if user has a profile and is admin
-    const profileRef = doc(db, 'profiles', user.uid)
-    const profileSnap = await getDoc(profileRef)
+    const profileDoc = await db.collection('profiles').doc(userUid).get()
 
     // Create profile if it doesn't exist and user is admin email
-    if (!profileSnap.exists() && user.email === ADMIN_EMAIL) {
-      await setDoc(profileRef, {
+    const userData = profileDoc.data()
+    if (!profileDoc.exists && post.author?.email === ADMIN_EMAIL) {
+      await db.collection('profiles').doc(userUid).set({
         isAdmin: true,
-        email: user.email,
-        name: user.displayName || '',
-        photoURL: user.photoURL || '',
+        email: post.author.email,
+        name: post.author.name || '',
+        photoURL: post.author.image || '',
         createdAt: new Date().toISOString()
       })
-    } else if (!profileSnap.exists() || !profileSnap.data()?.isAdmin) {
+    } else if (!profileDoc.exists || !userData?.isAdmin) {
       throw new BlogError('User must be an admin to create posts')
     }
 
@@ -126,15 +104,9 @@ export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> 
       date: post.date || new Date().toISOString(),
       upvotes: 0,
       readTime: calculateReadTime(post.content),
-      author: {
-        uid: user.uid,
-        name: user.displayName || '',
-        email: user.email || '',
-        image: user.photoURL || ''
-      }
     }
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), postData)
+    const docRef = await db.collection(COLLECTION_NAME).add(postData)
 
     return {
       id: docRef.id,
@@ -144,16 +116,14 @@ export async function createPost(post: Omit<BlogPost, 'id'>): Promise<BlogPost> 
     console.error('Error creating post:', error)
     throw new BlogError(
       'Failed to create post',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function updatePost(post: BlogPost): Promise<BlogPost> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
     if (!post.id) {
       throw new Error('Post ID is required')
@@ -162,8 +132,7 @@ export async function updatePost(post: BlogPost): Promise<BlogPost> {
     // Create update data without the id field
     const { id, ...updateData } = post
 
-    const docRef = doc(db, COLLECTION_NAME, post.id)
-    await updateDoc(docRef, {
+    await db.collection(COLLECTION_NAME).doc(post.id).update({
       ...updateData,
       updatedAt: new Date().toISOString(),
     })
@@ -172,47 +141,41 @@ export async function updatePost(post: BlogPost): Promise<BlogPost> {
     console.error('Error updating post:', error)
     throw new BlogError(
       'Failed to update post',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function deletePost(id: string): Promise<void> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const docRef = doc(db, COLLECTION_NAME, id)
-    await deleteDoc(docRef)
+    await db.collection(COLLECTION_NAME).doc(id).delete()
   } catch (error) {
     console.error('Error deleting post:', error)
     throw new BlogError(
       'Failed to delete post',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function getPost(id: string): Promise<BlogPost | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const docRef = doc(db, COLLECTION_NAME, id)
-    const docSnap = await getDoc(docRef)
+    const docSnap = await db.collection(COLLECTION_NAME).doc(id).get()
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists) {
       return null
     }
 
-    return convertPost(docSnap.id, docSnap.data())
+    return convertPost(docSnap.id, docSnap.data()!)
   } catch (error) {
     console.error('Error getting post:', error)
     throw new BlogError(
       'Failed to get post',
-      error as FirestoreError
+      error
     )
   }
 }
@@ -227,20 +190,18 @@ export async function getAllPosts(
   } = {}
 ): Promise<PaginationResult<BlogPost>> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
     const { publishedOnly = true, pagination = DEFAULT_PAGINATION } = options;
 
-    const postsRef = collection(db, COLLECTION_NAME);
-    let q = query(postsRef);
+    // Get reference to blog_posts collection
+    const postsRef = db.collection(COLLECTION_NAME);
 
-    // Start with a simple query - just sort by date
-    q = query(postsRef, orderBy('date', pagination.orderDirection || 'desc'));
+    // Build query - Admin SDK uses different API than client SDK
+    let query = postsRef.orderBy('date', pagination.orderDirection || 'desc');
 
     // Execute the query
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await query.get();
     let allPosts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
 
     // If we need to filter for published posts, do it in memory
@@ -254,24 +215,19 @@ export async function getAllPosts(
     console.error('Error getting posts:', error)
     throw new BlogError(
       'Failed to get posts',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function getPostBySlug(slug: string, includeDrafts = false): Promise<BlogPost | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    // Use a simple query without composite indexes
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('slug', '==', slug)
-    );
-
-    const querySnapshot = await getDocs(q);
+    // Query by slug using Admin SDK
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .where('slug', '==', slug)
+      .get();
 
     // Process results in memory
     if (querySnapshot.empty) {
@@ -292,24 +248,19 @@ export async function getPostBySlug(slug: string, includeDrafts = false): Promis
     console.error('Error getting post by slug:', error)
     throw new BlogError(
       'Failed to get post by slug',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    // Use a simpler query to avoid composite index requirements
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('tags', 'array-contains', tag)
-    );
-
-    const querySnapshot = await getDocs(q);
+    // Query by tag using Admin SDK
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .where('tags', 'array-contains', tag)
+      .get();
 
     // Filter and sort in memory
     const posts = querySnapshot.docs
@@ -322,7 +273,7 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
     console.error('Error getting posts by tag:', error)
     throw new BlogError(
       'Failed to get posts by tag',
-      error as FirestoreError
+      error
     )
   }
 }
@@ -339,9 +290,7 @@ export async function getMostUpvotedPosts(
   } = {}
 ): Promise<BlogPost[]> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
     const {
       limit: postLimit = 5,
@@ -355,15 +304,12 @@ export async function getMostUpvotedPosts(
     cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
     const cutoffDateIso = cutoffDate.toISOString();
 
-    // Query for posts ordered by upvotes in descending order
-    const postsRef = collection(db, COLLECTION_NAME);
-    let q = query(
-      postsRef,
-      orderBy('upvotes', 'desc'),
-      limit(postLimit * 2)
-    );
+    // Query for posts ordered by upvotes in descending order using Admin SDK
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .orderBy('upvotes', 'desc')
+      .limit(postLimit * 2)
+      .get();
 
-    const querySnapshot = await getDocs(q);
     const posts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
 
     // Filter in memory for more complex criteria
@@ -386,7 +332,7 @@ export async function getMostUpvotedPosts(
     return filteredPosts.slice(0, postLimit);
   } catch (error) {
     console.error('Error getting most upvoted posts:', error);
-    throw new BlogError('Failed to get most upvoted posts', error as FirestoreError);
+    throw new BlogError('Failed to get most upvoted posts', error);
   }
 }
 
@@ -394,13 +340,12 @@ export async function hasUserUpvoted(postId: string, userId: string | null): Pro
   if (!userId) return false
 
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const docRef = doc(db, `${COLLECTION_NAME}/${postId}/upvotes`, userId)
-    const docSnap = await getDoc(docRef)
-    return docSnap.exists()
+    const docSnap = await db.collection(COLLECTION_NAME).doc(postId)
+      .collection('upvotes').doc(userId).get()
+
+    return docSnap.exists
   } catch (error) {
     console.error('Error checking upvote status:', error)
     return false

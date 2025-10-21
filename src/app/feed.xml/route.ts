@@ -4,7 +4,7 @@
  * https://www.rssboard.org/rss-specification
  */
 
-import { getAllPosts } from '@/lib/blog'
+import { getAllPosts } from '@/lib/blog-server'
 import { SITE_CONFIG } from '@/lib/seo/utils'
 import type { BlogPost } from '@/types/blog'
 

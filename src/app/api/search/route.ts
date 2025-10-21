@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllPosts } from '@/lib/blog'
+import { getAllPosts } from '@/lib/blog-server'
 import { getAllProjects } from '@/lib/projects'
 import { getAllAnnouncements } from '@/lib/announcements'
 

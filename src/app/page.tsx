@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { getAllPosts, getMostUpvotedPosts } from '@/lib/blog'
+import { getAllPosts, getMostUpvotedPosts } from '@/lib/blog-server'
 import { getActiveAnnouncements } from '@/lib/announcements'
 import { BlogList } from '@/components/blog-list'
 import { RecentPosts } from '@/components/recent-posts'

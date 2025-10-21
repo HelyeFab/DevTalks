@@ -5,7 +5,7 @@
  */
 
 import { MetadataRoute } from 'next'
-import { getAllPosts } from '@/lib/blog'
+import { getAllPosts } from '@/lib/blog-server'
 import { getAllProjects } from '@/lib/projects'
 import { getAllAnnouncements } from '@/lib/announcements'
 import { SITE_CONFIG } from '@/lib/seo/utils'
