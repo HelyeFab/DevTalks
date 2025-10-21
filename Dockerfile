@@ -27,7 +27,7 @@
 # ============================================================================
 # Stage 1: Dependencies
 # ============================================================================
-FROM node:18-slim AS deps
+FROM node:20-slim AS deps
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -44,7 +44,7 @@ RUN npm ci
 # ============================================================================
 # Stage 2: Builder
 # ============================================================================
-FROM node:18-slim AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -99,7 +99,7 @@ RUN npm run build || \
 # ============================================================================
 # Stage 3: Runner (Production)
 # ============================================================================
-FROM node:18-slim AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
@@ -154,4 +154,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 # ============================================================================
 
 # Start the application with SSL/TLS fix
-CMD ["node", "--openssl-legacy-provider", "server-ssl-fix.js"]
+CMD ["node", "server-ssl-fix.js"]

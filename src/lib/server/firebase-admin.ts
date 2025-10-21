@@ -13,13 +13,39 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore'
 let adminApp: App | null = null
 let adminAuth: Auth | null = null
 let adminDb: Firestore | null = null
-let grpcConfigApplied = false
 
 interface AdminServices {
   app: App | null
   auth: Auth
   db: Firestore
   isAvailable: boolean
+}
+
+/**
+ * Formats the private key to handle various environment variable encoding issues
+ * This handles newline character corruption that occurs across different hosting platforms
+ */
+function formatPrivateKey(key: string): string {
+  if (!key) {
+    throw new Error('Private key is empty')
+  }
+
+  // Remove any quotes that might have been added
+  let formattedKey = key.replace(/^["']|["']$/g, '')
+
+  // Replace literal \n with actual newlines
+  formattedKey = formattedKey.replace(/\\n/g, '\n')
+
+  // Ensure proper PEM format with spacing in headers
+  formattedKey = formattedKey.replace('-----BEGINPRIVATEKEY-----', '-----BEGIN PRIVATE KEY-----')
+  formattedKey = formattedKey.replace('-----ENDPRIVATEKEY-----', '-----END PRIVATE KEY-----')
+
+  // Verify it looks like a PEM key
+  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    throw new Error('Private key does not appear to be in PEM format')
+  }
+
+  return formattedKey
 }
 
 /**
@@ -88,27 +114,18 @@ export function initializeFirebaseAdmin(): AdminServices {
   }
 
   try {
-    // Apply gRPC and SSL/TLS configuration for Node.js v20 compatibility BEFORE any Firestore operations
-    // Only apply once globally
-    if (process.env.NODE_ENV === 'production' && !grpcConfigApplied) {
-      // Set gRPC options to handle SSL/TLS decoder issues in Node.js v20
-      process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA';
-      process.env.GRPC_VERBOSITY = 'ERROR';
-      process.env.GRPC_TRACE = '';
-      grpcConfigApplied = true
-      console.log('Applied gRPC SSL configuration for Node.js v20 compatibility')
-    }
-
     // Check if an app is already initialized
     if (getApps().length === 0) {
+      // Format the private key to handle environment variable encoding issues
+      const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY!)
+
       adminApp = initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID!,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+          privateKey: privateKey,
         }),
         projectId: process.env.FIREBASE_PROJECT_ID,
-        databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
       })
       console.log('Firebase Admin SDK initialized successfully')
     } else {
@@ -119,15 +136,6 @@ export function initializeFirebaseAdmin(): AdminServices {
     // Initialize services
     adminAuth = getAuth(adminApp)
     adminDb = getFirestore(adminApp)
-
-    // Configure Firestore settings for better Node.js v20 compatibility
-    if (process.env.NODE_ENV === 'production') {
-      adminDb.settings({
-        preferRest: true, // Use REST API instead of gRPC to avoid SSL/TLS issues
-        ignoreUndefinedProperties: true
-      })
-      console.log('Configured Firestore to use REST API for Node.js v20 compatibility')
-    }
 
     return {
       app: adminApp,
