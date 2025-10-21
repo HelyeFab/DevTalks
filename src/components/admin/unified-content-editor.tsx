@@ -11,6 +11,7 @@ import { ImagePicker } from '@/components/image-picker'
 import { DatePicker } from '@/components/date-picker'
 import { Modal } from '@/components/modal'
 import { SEOAnalysis } from '@/components/seo-analysis'
+import { SEOSuggestions } from '@/components/seo-suggestions'
 import { MarkdownImporter } from '@/components/markdown-importer'
 import { ImageUploadHelper } from '@/components/image-upload-helper'
 import { useEditorData } from '@/hooks/use-editor-data'
@@ -829,9 +830,28 @@ export function UnifiedContentEditor({
           </div>
         </div>
 
-        {/* Sidebar - SEO Analysis */}
+        {/* Sidebar - SEO Analysis & Suggestions */}
         <div className="lg:col-span-1">
-          <div className="sticky top-6">
+          <div className="sticky top-6 space-y-6">
+            {/* SEO Suggestions (AI-powered) */}
+            <SEOSuggestions
+              title={title}
+              metaTitle={seo.metaTitle}
+              metaDescription={seo.metaDescription}
+              focusKeyword={seo.focusKeyword}
+              tags={tags.map(t => t.name)}
+              onApplySuggestion={(field, value) => {
+                if (field === 'title') {
+                  setTitle(value)
+                } else if (field === 'metaTitle') {
+                  setSeo({ ...seo, metaTitle: value })
+                } else if (field === 'metaDescription') {
+                  setSeo({ ...seo, metaDescription: value })
+                }
+              }}
+            />
+
+            {/* SEO Analysis */}
             <SEOAnalysis
               title={title}
               metaTitle={seo.metaTitle}

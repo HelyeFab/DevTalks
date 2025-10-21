@@ -265,7 +265,28 @@ export function SEOAnalysis({
       totalScore += 5
     }
 
-    return { checks, totalScore, maxScore: 105 }
+    // 10. Content Freshness (Year in Title)
+    const currentYear = new Date().getFullYear()
+    const hasYear = titleToCheck.includes(currentYear.toString())
+
+    if (hasYear) {
+      checks.push({
+        label: 'Content Freshness',
+        status: 'pass',
+        message: `Year (${currentYear}) included in title - signals fresh content!`,
+        score: 10
+      })
+      totalScore += 10
+    } else {
+      checks.push({
+        label: 'Content Freshness',
+        status: 'warning',
+        message: `Add "${currentYear}" to title for freshness signal (14% of ranking algorithm!)`,
+        score: 0
+      })
+    }
+
+    return { checks, totalScore, maxScore: 115 }
   }, [title, metaTitle, metaDescription, content, focusKeyword, slug, imageAlt])
 
   const scorePercentage = Math.round((analysis.totalScore / analysis.maxScore) * 100)
@@ -299,7 +320,7 @@ export function SEOAnalysis({
             <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
               {check.score}/{
                 check.label === 'Title Length' || check.label === 'Meta Description' || check.label === 'Content Length' ? '15' :
-                check.label.includes('Keyword') || check.label === 'URL Slug' || check.label === 'Image Alt Text' || check.label === 'Heading Structure' ? '10' : '5'
+                check.label.includes('Keyword') || check.label === 'URL Slug' || check.label === 'Image Alt Text' || check.label === 'Heading Structure' || check.label === 'Content Freshness' ? '10' : '5'
               }
             </div>
           </div>
