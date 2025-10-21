@@ -1,21 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  FirestoreError,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  DocumentData,
-  setDoc
-} from 'firebase/firestore'
-import { db } from './firebase'
-import { getAuth } from 'firebase/auth'
+import { initAdmin } from './firebase-admin'
 import { Project } from '@/types/project'
 export type { Project }
 
@@ -23,7 +6,7 @@ export type { Project }
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 
 class ProjectError extends Error {
-  constructor(message: string, public originalError?: FirestoreError) {
+  constructor(message: string, public originalError?: Error) {
     super(message)
     this.name = 'ProjectError'
   }
@@ -32,15 +15,16 @@ class ProjectError extends Error {
 const COLLECTION_NAME = 'projects'
 
 // Helper function to convert Firestore data to Project
-function convertProject(id: string, data: DocumentData): Project {
+function convertProject(id: string, data: any): Project {
   // Ensure all date fields are converted to ISO strings
-  const createdAt = data.createdAt instanceof Timestamp
+  // Admin SDK Timestamp has a toDate method
+  const createdAt = data.createdAt?.toDate
     ? data.createdAt.toDate().toISOString()
     : typeof data.createdAt === 'string'
       ? data.createdAt
       : new Date().toISOString()
 
-  const updatedAt = data.updatedAt instanceof Timestamp
+  const updatedAt = data.updatedAt?.toDate
     ? data.updatedAt.toDate().toISOString()
     : typeof data.updatedAt === 'string'
       ? data.updatedAt
@@ -174,14 +158,12 @@ export async function deleteProject(id: string): Promise<void> {
 
 export async function getProject(id: string): Promise<Project | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const { adminDb: db } = initAdmin()
 
-    const docRef = doc(db, COLLECTION_NAME, id)
-    const docSnap = await getDoc(docRef)
+    const docRef = db.collection(COLLECTION_NAME).doc(id)
+    const docSnap = await docRef.get()
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists) {
       return null
     }
 
@@ -190,7 +172,7 @@ export async function getProject(id: string): Promise<Project | null> {
     console.error('Error getting project:', error)
     throw new ProjectError(
       'Failed to get project',
-      error as FirestoreError
+      error as Error
     )
   }
 }
@@ -207,23 +189,15 @@ export async function getAllProjects(
   } = {}
 ): Promise<PaginationResult<Project>> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const { adminDb: db } = initAdmin()
 
     const { featuredOnly = false, pagination = DEFAULT_PAGINATION } = options;
 
-    const projectsRef = collection(db, COLLECTION_NAME);
-    let q = query(projectsRef);
-
-    // Note: Firestore requires composite indexes for complex queries
-    // For now, use a simpler approach to avoid index errors
-
-    // Just sort by createdAt
-    q = query(projectsRef, orderBy('createdAt', pagination.orderDirection || 'desc'));
+    const projectsRef = db.collection(COLLECTION_NAME);
+    let query = projectsRef.orderBy('createdAt', pagination.orderDirection || 'desc');
 
     // Execute the query
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await query.get();
     let allProjects = querySnapshot.docs.map(doc => convertProject(doc.id, doc.data()));
 
     // Filter in memory if needed
@@ -237,23 +211,18 @@ export async function getAllProjects(
     console.error('Error getting projects:', error)
     throw new ProjectError(
       'Failed to get projects',
-      error as FirestoreError
+      error as Error
     )
   }
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const { adminDb: db } = initAdmin()
 
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('slug', '==', slug)
-    )
-
-    const querySnapshot = await getDocs(q)
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .where('slug', '==', slug)
+      .get()
 
     if (querySnapshot.empty) {
       return null
@@ -265,30 +234,26 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
     console.error('Error getting project by slug:', error)
     throw new ProjectError(
       'Failed to get project by slug',
-      error as FirestoreError
+      error as Error
     )
   }
 }
 
 export async function getProjectsByTechnology(technology: string): Promise<Project[]> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const { adminDb: db } = initAdmin()
 
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('technologies', 'array-contains', technology),
-      orderBy('createdAt', 'desc')
-    )
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .where('technologies', 'array-contains', technology)
+      .orderBy('createdAt', 'desc')
+      .get()
 
-    const querySnapshot = await getDocs(q)
     return querySnapshot.docs.map(doc => convertProject(doc.id, doc.data()))
   } catch (error) {
     console.error('Error getting projects by technology:', error)
     throw new ProjectError(
       'Failed to get projects by technology',
-      error as FirestoreError
+      error as Error
     )
   }
 }

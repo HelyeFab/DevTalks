@@ -10,7 +10,7 @@ import { ArrowLeft, Clock, Share2, Link2, Facebook, Linkedin, MessageCircle, X }
 import Link from 'next/link'
 import Image from 'next/image'
 import { UpvoteButton } from '@/components/upvote-button'
-import { CommentSection } from '@/components/comments/comment-section'
+import { CommentSectionEnhanced } from '@/components/comments/comment-section-enhanced'
 import { clsx } from 'clsx'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
@@ -189,7 +189,7 @@ export default function BlogPostClient({ post }: Props) {
       </article>
 
       <div className="my-16 border-t border-border pt-16">
-        <CommentSection postId={post.id} />
+        <CommentSectionEnhanced postId={post.id} />
       </div>
 
       {/* Share Modal */}

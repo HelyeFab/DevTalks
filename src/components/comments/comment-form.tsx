@@ -64,20 +64,33 @@ export function CommentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+        className="w-full px-3 py-2 rounded-lg focus:ring-2 focus:border-transparent resize-none"
+        style={{
+          backgroundColor: 'var(--input)',
+          color: 'var(--foreground)',
+          borderColor: 'var(--border)',
+          borderWidth: '1px',
+          borderStyle: 'solid'
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = 'var(--ring)'
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = 'var(--border)'
+        }}
       />
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       )}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 w-full">
         {onCancel && (
           <button
             type="button"
@@ -90,7 +103,18 @@ export function CommentForm({
         <button
           type="submit"
           disabled={!content.trim() || isSubmitting}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: 'var(--primary)',
+            color: 'var(--primary-foreground)'
+          }}
+          onMouseEnter={(e) => {
+            if (!content.trim() || isSubmitting) return
+            e.currentTarget.style.backgroundColor = 'var(--primary-hover)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--primary)'
+          }}
         >
           {isSubmitting ? 'Submitting...' : submitLabel}
         </button>

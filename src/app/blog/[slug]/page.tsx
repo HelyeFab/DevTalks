@@ -1,4 +1,4 @@
-import { getPostBySlug } from "@/lib/blog";
+import { getPostBySlug } from "@/lib/blog-server";
 import { getMdxPostBySlug, mdxPostExists } from "@/lib/blog-mdx";
 import logger from "@/lib/logger";
 import BlogPostClient from "./client";

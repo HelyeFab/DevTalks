@@ -8,8 +8,6 @@ import {
   type AuthContext
 } from '@/lib/auth'
 
-const { db } = initAdmin()
-
 const POSTS_COLLECTION = 'blog_posts'
 const UPVOTES_COLLECTION = 'upvotes'
 // Consolidation: Using only subcollections for upvotes
@@ -28,6 +26,7 @@ export const POST = withRateLimit(
       const postId = resolvedParams.postId
 
       try {
+        const { adminDb: db } = initAdmin()
         const userId = authContext.user.uid
 
         // Get the post document reference

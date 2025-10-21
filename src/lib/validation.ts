@@ -75,7 +75,7 @@ export const commentSchema = z.object({
   author: z.object({
     name: z.string().min(1, 'Author name is required'),
     email: z.string().email('Valid email is required'),
-    image: z.string().url('Image must be a valid URL').optional(),
+    image: z.string().url('Image must be a valid URL').optional().or(z.literal('')).nullable(),
   }),
   postId: z.string().optional(), // Sometimes postId comes from the URL
   parentId: z.string().optional(), // For replies
