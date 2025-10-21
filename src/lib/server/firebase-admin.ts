@@ -89,6 +89,15 @@ export function initializeFirebaseAdmin(): AdminServices {
   try {
     // Check if an app is already initialized
     if (getApps().length === 0) {
+      // Apply gRPC and SSL/TLS configuration for Node.js v20 compatibility
+      if (process.env.NODE_ENV === 'production') {
+        // Set gRPC options to handle SSL/TLS decoder issues in Node.js v20
+        process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA';
+        process.env.GRPC_VERBOSITY = 'ERROR';
+        process.env.GRPC_TRACE = '';
+        console.log('Applied gRPC SSL configuration for Node.js v20 compatibility')
+      }
+
       adminApp = initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID!,
