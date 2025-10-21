@@ -16,6 +16,25 @@ declare global {
 // Flag to track if Firebase Admin is available
 let isFirebaseAdminAvailable = true;
 
+/**
+ * Formats the private key to handle various environment variable encoding issues
+ */
+function formatPrivateKey(key: string): string {
+  if (!key) return '';
+
+  // Remove any quotes
+  let formattedKey = key.replace(/^["']|["']$/g, '')
+
+  // Replace literal \n with actual newlines
+  formattedKey = formattedKey.replace(/\\n/g, '\n')
+
+  // Ensure proper PEM format spacing
+  formattedKey = formattedKey.replace('-----BEGINPRIVATEKEY-----', '-----BEGIN PRIVATE KEY-----')
+  formattedKey = formattedKey.replace('-----ENDPRIVATEKEY-----', '-----END PRIVATE KEY-----')
+
+  return formattedKey
+}
+
 // Validate environment variables
 if (!process.env.FIREBASE_PROJECT_ID) {
   console.error('FIREBASE_PROJECT_ID is not set in environment variables');
@@ -42,7 +61,7 @@ if (process.env.FIREBASE_PRIVATE_KEY?.includes('placeholder-for-new-key')) {
 const serviceAccount = isFirebaseAdminAvailable ? {
   projectId: process.env.FIREBASE_PROJECT_ID,
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') || '',
+  privateKey: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY || ''),
 } : null;
 
 // Flag to indicate if we're in a development environment
@@ -77,15 +96,6 @@ function getFirebaseAdminApp() {
     try {
       if (!serviceAccount) {
         throw new Error('Service account is not properly configured');
-      }
-
-      // Apply gRPC and SSL/TLS configuration for Node.js v20 compatibility
-      if (process.env.NODE_ENV === 'production') {
-        // Set gRPC options to handle SSL/TLS decoder issues in Node.js v20
-        process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA';
-        process.env.GRPC_VERBOSITY = 'ERROR';
-        process.env.GRPC_TRACE = '';
-        console.log('Applied gRPC SSL configuration for Node.js v20 compatibility');
       }
 
       const app = initializeApp({
