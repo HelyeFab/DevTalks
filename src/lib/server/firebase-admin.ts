@@ -13,6 +13,7 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore'
 let adminApp: App | null = null
 let adminAuth: Auth | null = null
 let adminDb: Firestore | null = null
+let grpcConfigApplied = false
 
 interface AdminServices {
   app: App | null
@@ -88,11 +89,13 @@ export function initializeFirebaseAdmin(): AdminServices {
 
   try {
     // Apply gRPC and SSL/TLS configuration for Node.js v20 compatibility BEFORE any Firestore operations
-    if (process.env.NODE_ENV === 'production') {
+    // Only apply once globally
+    if (process.env.NODE_ENV === 'production' && !grpcConfigApplied) {
       // Set gRPC options to handle SSL/TLS decoder issues in Node.js v20
       process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA';
       process.env.GRPC_VERBOSITY = 'ERROR';
       process.env.GRPC_TRACE = '';
+      grpcConfigApplied = true
       console.log('Applied gRPC SSL configuration for Node.js v20 compatibility')
     }
 
@@ -116,6 +119,15 @@ export function initializeFirebaseAdmin(): AdminServices {
     // Initialize services
     adminAuth = getAuth(adminApp)
     adminDb = getFirestore(adminApp)
+
+    // Configure Firestore settings for better Node.js v20 compatibility
+    if (process.env.NODE_ENV === 'production') {
+      adminDb.settings({
+        preferRest: true, // Use REST API instead of gRPC to avoid SSL/TLS issues
+        ignoreUndefinedProperties: true
+      })
+      console.log('Configured Firestore to use REST API for Node.js v20 compatibility')
+    }
 
     return {
       app: adminApp,
