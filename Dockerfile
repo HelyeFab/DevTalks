@@ -150,4 +150,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 # ============================================================================
 
 # Start the application with SSL/TLS fix
-CMD ["node", "server-ssl-fix.js"]
+CMD ["node", "--openssl-legacy-provider", "server-ssl-fix.js"]
