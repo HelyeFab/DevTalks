@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { createProject } from '@/lib/projects'
+import { createProject } from '@/lib/projects-client'
 import dynamic from 'next/dynamic'
 import { ImagePicker } from '@/components/image-picker'
 import { Modal } from '@/components/modal'
@@ -159,7 +159,8 @@ export default function NewProject() {
       }
 
       // Create project using the projects service
-      await createProject(project)
+      const token = await user!.getIdToken()
+      await createProject(project, token)
       console.log('Project created successfully')
       router.push('/admin/projects')
     } catch (error) {

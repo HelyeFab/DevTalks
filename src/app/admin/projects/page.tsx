@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PenSquare, Trash2, Eye } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-import { getAllProjects, deleteProject, updateProject, type Project } from '@/lib/projects'
+import { getAllProjects, deleteProject, updateProject, type Project } from '@/lib/projects-client'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 import { toast } from 'sonner'
 
@@ -26,9 +26,12 @@ export default function ProjectsList() {
 
   useEffect(() => {
     async function fetchProjects() {
+      if (!user) return
+
       try {
         console.log('Fetching all projects...')
-        const result = await getAllProjects()
+        const token = await user.getIdToken()
+        const result = await getAllProjects({ token })
         console.log('Fetched projects:', result)
         setProjects(result.items)
       } catch (error) {
@@ -45,11 +48,12 @@ export default function ProjectsList() {
   }, [user, isAdmin])
 
   const handleToggleFeatured = async (project: Project) => {
-    if (!project.id) return
+    if (!project.id || !user) return
 
     try {
+      const token = await user.getIdToken()
       const newStatus = !project.featured
-      await updateProject(project.id, { featured: newStatus })
+      await updateProject(project.id, { featured: newStatus }, token)
       setProjects(projects.map(p =>
         p.id === project.id ? { ...p, featured: newStatus } : p
       ))
@@ -64,10 +68,11 @@ export default function ProjectsList() {
   }
 
   const confirmDelete = async () => {
-    if (!projectToDelete) return
+    if (!projectToDelete || !user) return
 
     try {
-      await deleteProject(projectToDelete)
+      const token = await user.getIdToken()
+      await deleteProject(projectToDelete, token)
       setProjects(projects.filter(project => project.id !== projectToDelete))
       toast.success('Project deleted successfully')
     } catch (error) {

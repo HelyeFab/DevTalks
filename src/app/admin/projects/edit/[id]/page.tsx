@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { getProject, updateProject } from '@/lib/projects'
+import { getProject, updateProject } from '@/lib/projects-client'
 import { Project } from '@/types/project'
 import dynamic from 'next/dynamic'
 import { ImagePicker } from '@/components/image-picker'
@@ -76,7 +76,8 @@ export default function EditProjectPage() {
 
       try {
         setIsLoading(true)
-        const fetchedProject = await getProject(projectId)
+        const token = await user.getIdToken()
+        const fetchedProject = await getProject(projectId, token)
 
         if (!fetchedProject) {
           setError('Project not found')
@@ -210,7 +211,8 @@ export default function EditProjectPage() {
       }
 
       // Update the project
-      await updateProject(projectId, updatedProject)
+      const token = await user!.getIdToken()
+      await updateProject(projectId, updatedProject, token)
       console.log('Project updated successfully')
       router.push('/admin/projects')
     } catch (error) {

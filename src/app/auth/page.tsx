@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { FaGoogle } from 'react-icons/fa'
@@ -10,7 +10,7 @@ import { AlertCircle } from 'lucide-react'
 
 type AuthMode = 'signin' | 'signup'
 
-export default function Auth() {
+function AuthContent() {
   const searchParams = useSearchParams()
   const initialMode = (searchParams.get('mode') as AuthMode) || 'signin'
 
@@ -388,5 +388,17 @@ export default function Auth() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function Auth() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   )
 }
