@@ -6,8 +6,8 @@
 
 import { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/blog-server'
-import { getAllProjects } from '@/lib/projects'
-import { getAllAnnouncements } from '@/lib/announcements'
+import { getAllProjects } from '@/lib/projects-server'
+import { getAllAnnouncements } from '@/lib/announcements-server'
 import { SITE_CONFIG } from '@/lib/seo/utils'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

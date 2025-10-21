@@ -2,29 +2,13 @@
  * Server-only announcement operations
  *
  * This module contains all server-side announcement operations that interact
- * directly with Firestore. It should NEVER be imported in client components.
+ * directly with Firestore using Firebase Admin SDK.
+ * It should NEVER be imported in client components.
  */
 
 import 'server-only'
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  FirestoreError,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  DocumentData,
-  setDoc
-} from 'firebase/firestore'
-import { db } from './firebase'
-import { getAuth } from 'firebase/auth'
+import { getAdminDb } from './server/firebase-admin'
 import { calculateReadTime } from '@/utils/read-time'
 import type { Author, SEOMetadata } from '@/types/blog'
 import { PaginationParams, PaginationResult, DEFAULT_PAGINATION, paginateArray } from './pagination'
@@ -36,7 +20,7 @@ export interface Announcement {
   id?: string
   title: string
   subtitle: string
-  content: string
+  content: string // MDX/Markdown content
   excerpt?: string
   image?: string
   imageAlt?: string
@@ -57,26 +41,30 @@ export interface Announcement {
 }
 
 class AnnouncementError extends Error {
-  constructor(message: string, public originalError?: FirestoreError) {
+  constructor(message: string, public originalError?: unknown) {
     super(message)
     this.name = 'AnnouncementError'
   }
 }
 
-// Helper function to convert Firestore data to Announcement
-const convertAnnouncement = (id: string, data: DocumentData): Announcement => {
-  const date = data.date instanceof Timestamp
-    ? data.date.toDate().toISOString()
+const COLLECTION_NAME = 'announcements'
+
+// Helper function to convert Firestore Admin SDK data to Announcement
+function convertAnnouncement(id: string, data: FirebaseFirestore.DocumentData): Announcement {
+  // Ensure all date fields are converted to ISO strings
+  const date = data.date?._seconds
+    ? new Date(data.date._seconds * 1000).toISOString()
     : typeof data.date === 'string'
       ? data.date
       : new Date().toISOString()
 
-  const publishedAt = data.publishedAt instanceof Timestamp
-    ? data.publishedAt.toDate().toISOString()
+  const publishedAt = data.publishedAt?._seconds
+    ? new Date(data.publishedAt._seconds * 1000).toISOString()
     : typeof data.publishedAt === 'string'
       ? data.publishedAt
       : undefined
 
+  // Ensure author object is properly structured
   const author: Author = {
     name: data.author?.name || '',
     email: data.author?.email || '',
@@ -109,31 +97,35 @@ const convertAnnouncement = (id: string, data: DocumentData): Announcement => {
   }
 }
 
-export async function createAnnouncement(announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>): Promise<Announcement> {
+// Server-side functions using Firebase Admin SDK
+export async function createAnnouncement(
+  announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>,
+  userUid?: string,
+  userName?: string,
+  userEmail?: string,
+  userPhoto?: string
+): Promise<Announcement> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const auth = getAuth()
-    const user = auth.currentUser
-
-    if (!user) {
+    if (!userUid) {
       throw new AnnouncementError('User must be authenticated to create announcements')
     }
 
-    const profileRef = doc(db, 'profiles', user.uid)
-    const profileSnap = await getDoc(profileRef)
+    // Check if user has a profile and is admin
+    const profileDoc = await db.collection('profiles').doc(userUid).get()
 
-    if (!profileSnap.exists() && user.email === ADMIN_EMAIL) {
-      await setDoc(profileRef, {
+    // Create profile if it doesn't exist and user is admin email
+    const userData = profileDoc.data()
+    if (!profileDoc.exists && userEmail === ADMIN_EMAIL) {
+      await db.collection('profiles').doc(userUid).set({
         isAdmin: true,
-        email: user.email,
-        name: user.displayName || '',
-        photoURL: user.photoURL || '',
+        email: userEmail,
+        name: userName || '',
+        photoURL: userPhoto || '',
         createdAt: new Date().toISOString()
       })
-    } else if (!profileSnap.exists() || !profileSnap.data()?.isAdmin) {
+    } else if (!profileDoc.exists || !userData?.isAdmin) {
       throw new AnnouncementError('User must be an admin to create announcements')
     }
 
@@ -143,10 +135,10 @@ export async function createAnnouncement(announcement: Omit<Announcement, 'id' |
       date: announcement.date || now,
       readTime: calculateReadTime(announcement.content),
       author: {
-        uid: user.uid,
-        name: user.displayName || '',
-        email: user.email || '',
-        image: user.photoURL || ''
+        uid: userUid,
+        name: userName || '',
+        email: userEmail || '',
+        image: userPhoto || ''
       },
       startDate: announcement.startDate || null,
       endDate: announcement.endDate || null,
@@ -155,73 +147,75 @@ export async function createAnnouncement(announcement: Omit<Announcement, 'id' |
       updatedAt: now,
     }
 
-    const docRef = await addDoc(collection(db, 'announcements'), announcementData)
+    const docRef = await db.collection(COLLECTION_NAME).add(announcementData)
+
     return {
       id: docRef.id,
       ...announcementData,
     }
   } catch (error) {
     console.error('Error creating announcement:', error)
-    throw new AnnouncementError('Failed to create announcement', error as FirestoreError)
+    throw new AnnouncementError('Failed to create announcement', error)
   }
 }
 
 export async function updateAnnouncement(announcement: Announcement): Promise<Announcement> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
     if (!announcement.id) {
       throw new Error('Announcement ID is required')
     }
 
+    // Create update data without the id field
     const { id, ...updateData } = announcement
 
-    const docRef = doc(db, 'announcements', announcement.id)
-    await updateDoc(docRef, {
+    await db.collection(COLLECTION_NAME).doc(announcement.id).update({
       ...updateData,
       updatedAt: new Date().toISOString(),
     })
+
     return announcement
   } catch (error) {
     console.error('Error updating announcement:', error)
     throw new AnnouncementError(
       'Failed to update announcement',
-      error as FirestoreError
+      error
     )
   }
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   try {
-    await deleteDoc(doc(db, 'announcements', id))
+    const db = getAdminDb()
+
+    await db.collection(COLLECTION_NAME).doc(id).delete()
   } catch (error) {
     console.error('Error deleting announcement:', error)
-    throw new AnnouncementError('Failed to delete announcement', error as FirestoreError)
+    throw new AnnouncementError('Failed to delete announcement', error)
   }
 }
 
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const docRef = doc(db, 'announcements', id)
-    const docSnap = await getDoc(docRef)
+    const docSnap = await db.collection(COLLECTION_NAME).doc(id).get()
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists) {
       return null
     }
 
-    return convertAnnouncement(docSnap.id, docSnap.data())
+    return convertAnnouncement(docSnap.id, docSnap.data()!)
   } catch (error) {
     console.error('Error getting announcement:', error)
-    throw new AnnouncementError('Failed to get announcement', error as FirestoreError)
+    throw new AnnouncementError('Failed to get announcement', error)
   }
 }
 
+/**
+ * Get all announcements with pagination support
+ */
 export async function getAllAnnouncements(
   options: {
     publishedOnly?: boolean,
@@ -229,46 +223,48 @@ export async function getAllAnnouncements(
   } = {}
 ): Promise<PaginationResult<Announcement>> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
     const { publishedOnly = true, pagination = DEFAULT_PAGINATION } = options;
 
-    const announcementsRef = collection(db, 'announcements');
-    let q = query(announcementsRef, orderBy('date', pagination.orderDirection || 'desc'));
+    // Get reference to announcements collection
+    const announcementsRef = db.collection(COLLECTION_NAME);
 
-    const querySnapshot = await getDocs(q);
+    // Build query - Admin SDK uses different API than client SDK
+    let query = announcementsRef.orderBy('date', pagination.orderDirection || 'desc');
+
+    // Execute the query
+    const querySnapshot = await query.get();
     let allAnnouncements = querySnapshot.docs.map(doc => convertAnnouncement(doc.id, doc.data()));
 
+    // If we need to filter for published announcements, do it in memory
     if (publishedOnly) {
       allAnnouncements = allAnnouncements.filter(announcement => announcement.published);
     }
 
+    // Apply pagination
     return paginateArray(allAnnouncements, pagination);
   } catch (error) {
     console.error('Error getting announcements:', error)
-    throw new AnnouncementError('Failed to get announcements', error as FirestoreError)
+    throw new AnnouncementError('Failed to get announcements', error)
   }
 }
 
 export async function getAnnouncementBySlug(slug: string, includeDrafts = false): Promise<Announcement | null> {
   try {
-    if (!db) {
-      throw new Error('Firestore is not initialized')
-    }
+    const db = getAdminDb()
 
-    const q = query(
-      collection(db, 'announcements'),
-      where('slug', '==', slug)
-    );
+    // Query by slug using Admin SDK
+    const querySnapshot = await db.collection(COLLECTION_NAME)
+      .where('slug', '==', slug)
+      .get();
 
-    const querySnapshot = await getDocs(q);
-
+    // Process results in memory
     if (querySnapshot.empty) {
       return null;
     }
 
+    // Filter for published status in memory if needed
     const docs = querySnapshot.docs;
     for (const doc of docs) {
       const announcement = convertAnnouncement(doc.id, doc.data());
@@ -282,22 +278,28 @@ export async function getAnnouncementBySlug(slug: string, includeDrafts = false)
     console.error('Error getting announcement by slug:', error)
     throw new AnnouncementError(
       'Failed to get announcement by slug',
-      error as FirestoreError
+      error
     )
   }
 }
 
+/**
+ * Get active announcements (current date falls between startDate and endDate)
+ */
 export async function getActiveAnnouncements(): Promise<Announcement[]> {
   try {
+    const db = getAdminDb()
     const now = new Date().toISOString()
 
-    const q = query(collection(db, 'announcements'))
+    // Use a simpler query approach to avoid index issues
+    const querySnapshot = await db.collection(COLLECTION_NAME).get()
 
-    const querySnapshot = await getDocs(q)
     const announcements = querySnapshot.docs.map(doc => convertAnnouncement(doc.id, doc.data()))
 
+    // Filter for published announcements in memory first
     const publishedAnnouncements = announcements.filter(announcement => announcement.published)
 
+    // Filter active announcements in memory
     const activeAnnouncements = publishedAnnouncements.filter(announcement => {
       const startDate = announcement.startDate ? new Date(announcement.startDate) : null
       const endDate = announcement.endDate ? new Date(announcement.endDate) : null
@@ -311,6 +313,6 @@ export async function getActiveAnnouncements(): Promise<Announcement[]> {
     return activeAnnouncements
   } catch (error) {
     console.error('Error getting active announcements:', error)
-    throw new AnnouncementError('Failed to get active announcements', error as FirestoreError)
+    throw new AnnouncementError('Failed to get active announcements', error)
   }
 }

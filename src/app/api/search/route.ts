@@ -6,8 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllPosts } from '@/lib/blog-server'
-import { getAllProjects } from '@/lib/projects'
-import { getAllAnnouncements } from '@/lib/announcements'
+import { getAllProjects } from '@/lib/projects-server'
+import { getAllAnnouncements } from '@/lib/announcements-server'
 
 interface SearchResult {
   type: 'post' | 'project' | 'announcement'

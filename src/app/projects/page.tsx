@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { ProjectCard } from '@/components/project-card'
-import { getAllProjects } from '@/lib/projects'
+import { getAllProjects } from '@/lib/projects-server'
 import { Project } from '@/types/project'
 import { SITE_CONFIG, getCanonicalUrl } from '@/lib/seo/utils'
 import { generateCollectionPageSchema, toJsonLd } from '@/lib/seo/schema'
