@@ -14,36 +14,38 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-// Check if we're in a build environment
-const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
-                    process.env.NEXT_PHASE === 'phase-production-server'
-
 // Check if Firebase config is valid
 const hasValidConfig = firebaseConfig.apiKey && firebaseConfig.projectId
 
-// Initialize Firebase only if not in build phase and config is valid
+// Initialize Firebase
 let app: FirebaseApp | undefined
 let db: Firestore | undefined
 let auth: Auth | undefined
 let storage: FirebaseStorage | undefined
 let analytics: Analytics | undefined
 
-if (!isBuildTime && hasValidConfig) {
+// Only initialize on the client side
+if (typeof window !== 'undefined' && hasValidConfig) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
     db = getFirestore(app)
     auth = getAuth(app)
     storage = getStorage(app)
 
-    // Initialize Analytics only in browser
-    if (typeof window !== 'undefined') {
-      isSupported().then(yes => yes && (analytics = getAnalytics(app!)))
-    }
+    // Initialize Analytics
+    isSupported().then(yes => yes && (analytics = getAnalytics(app!)))
   } catch (error) {
     console.error('Failed to initialize Firebase:', error)
+    console.error('Firebase config:', {
+      hasApiKey: !!firebaseConfig.apiKey,
+      hasProjectId: !!firebaseConfig.projectId,
+      authDomain: firebaseConfig.authDomain
+    })
   }
-} else if (isBuildTime) {
-  console.log('[BUILD] Skipping Firebase initialization during build phase')
+} else if (typeof window === 'undefined') {
+  console.log('[SERVER] Skipping Firebase client initialization on server')
+} else if (!hasValidConfig) {
+  console.error('[CLIENT] Invalid Firebase configuration - missing required environment variables')
 }
 
 export { app, db, auth, storage, analytics }
