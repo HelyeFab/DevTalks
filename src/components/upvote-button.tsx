@@ -90,7 +90,7 @@ export function UpvoteButton({
   if (!user) {
     return (
       <Link
-        href="/auth/signin"
+        href="/auth"
         className={`inline-flex items-center gap-2 ${buttonSizes[size]} rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${className}`}
       >
         <Heart className={iconSizes[size]} />

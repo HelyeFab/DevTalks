@@ -17,7 +17,7 @@ export default function EditAnnouncement() {
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
-      router.push('/auth/signin')
+      router.push('/auth')
       return
     }
 

@@ -21,7 +21,7 @@ export default function AdminDashboard() {
     const checkAuth = async () => {
       if (!user) {
         console.log('No user found, redirecting to signin')
-        router.push('/auth/signin')
+        router.push('/auth')
         return
       }
 
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await signOut()
-      router.push('/auth/signin')
+      router.push('/auth')
     } catch (error) {
       console.error('Error logging out:', error)
     }

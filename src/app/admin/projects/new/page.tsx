@@ -60,7 +60,7 @@ export default function NewProject() {
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
       console.log('Redirecting to signin - User:', !!user, 'Admin:', isAdmin)
-      router.push('/auth/signin')
+      router.push('/auth')
     }
   }, [user, loading, isAdmin, router])
 

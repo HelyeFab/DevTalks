@@ -163,17 +163,11 @@ export function Header() {
     return (
       <div className="flex items-center gap-4">
         <Link
-          href="/auth/signin"
+          href="/auth"
           className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
         >
           <LogIn className="h-5 w-5" />
           <span>Sign In</span>
-        </Link>
-        <Link
-          href="/auth/signup"
-          className="text-foreground hover:text-primary transition-colors"
-        >
-          Sign Up
         </Link>
       </div>
     )
@@ -289,18 +283,12 @@ export function Header() {
                     <>
                       <div className="h-px bg-border" />
                       <Link
-                        href="/auth/signin"
+                        href="/auth"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg py-2 text-foreground hover:text-primary transition-colors"
+                        className="text-lg py-2 text-foreground hover:text-primary transition-colors flex items-center gap-2"
                       >
+                        <LogIn className="h-5 w-5" />
                         Sign In
-                      </Link>
-                      <Link
-                        href="/auth/signup"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg py-2 text-foreground hover:text-primary transition-colors"
-                      >
-                        Sign Up
                       </Link>
                     </>
                   )}

@@ -63,7 +63,7 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/signin')
+      router.push('/auth')
     }
     if (user) {
       setDisplayName(user.displayName || '')

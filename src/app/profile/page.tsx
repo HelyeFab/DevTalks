@@ -13,7 +13,7 @@ export default function ProfileRedirect() {
       if (user) {
         router.replace('/user/profile')
       } else {
-        router.replace('/auth/signin')
+        router.replace('/auth')
       }
     }
   }, [router, user, loading])
