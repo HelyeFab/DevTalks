@@ -16,6 +16,14 @@ const MDEditor = dynamic(
   { ssr: false }
 )
 
+// Sanitization configuration
+let rehypeSanitize: any
+if (typeof window !== 'undefined') {
+  import('rehype-sanitize').then((mod) => {
+    rehypeSanitize = mod.default
+  })
+}
+
 interface Tag {
   id: string
   name: string
@@ -294,11 +302,14 @@ export function EditPostForm({ post: initialPost }: Props) {
               preview={editorMode}
               height={500}
               visibleDragbar={false}
+              previewOptions={{
+                rehypePlugins: rehypeSanitize ? [[rehypeSanitize]] : [],
+              }}
             />
           </div>
 
           <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML:</p>
+            <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML (HTML is automatically sanitized for security):</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li><strong>Edit mode:</strong> Raw markdown/HTML editing only</li>
               <li><strong>Live mode:</strong> Split view with editor and live preview</li>

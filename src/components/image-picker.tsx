@@ -182,9 +182,28 @@ export function ImagePicker({
     }
   }
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('ImagePicker button clicked', {
+      hasRef: !!fileInputRef.current,
+      refElement: fileInputRef.current
+    })
     setError(null)
-    fileInputRef.current?.click()
+
+    if (!fileInputRef.current) {
+      console.error('File input ref is null!')
+      setError('File picker not initialized. Please refresh the page.')
+      return
+    }
+
+    try {
+      fileInputRef.current.click()
+      console.log('File input click triggered')
+    } catch (err) {
+      console.error('Error triggering file input:', err)
+      setError('Failed to open file picker. Please try again.')
+    }
   }
 
   const handleRemove = () => {
@@ -236,6 +255,7 @@ export function ImagePicker({
               priority
             />
             <button
+              type="button"
               onClick={handleRemove}
               className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
               title="Remove image"
@@ -261,6 +281,7 @@ export function ImagePicker({
         </div>
       ) : (
         <button
+          type="button"
           onClick={handleClick}
           disabled={isUploading}
           className="w-full aspect-[16/9] flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
@@ -283,6 +304,7 @@ export function ImagePicker({
                   className="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                   role="progressbar"
+                  aria-label={`Upload progress: ${uploadProgress}%`}
                   aria-valuenow={uploadProgress}
                   aria-valuemin={0}
                   aria-valuemax={100}

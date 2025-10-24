@@ -17,7 +17,7 @@ import type { SEOMetadata } from '@/types/blog'
 import type { ParsedMarkdown } from '@/lib/markdown-parser'
 import { fixHeadingStructure, analyzeHeadingStructure } from '@/lib/markdown-parser'
 
-// Dynamically import the MDEditor and its styles
+// Dynamically import the MDEditor, sanitization, and styles
 const MDEditor = dynamic(
   () => {
     // Only import styles on client side
@@ -36,6 +36,14 @@ const MDEditor = dynamic(
     ),
   }
 )
+
+// Sanitization configuration
+let rehypeSanitize: any
+if (typeof window !== 'undefined') {
+  import('rehype-sanitize').then((mod) => {
+    rehypeSanitize = mod.default
+  })
+}
 
 interface Tag {
   id: string
@@ -522,12 +530,15 @@ export default function NewPost() {
                   preview={editorMode}
                   height={500}
                   visibleDragbar={false}
+                  previewOptions={{
+                    rehypePlugins: rehypeSanitize ? [[rehypeSanitize]] : [],
+                  }}
                 />
               )}
             </div>
 
             <div className="mt-2 text-sm text-muted-foreground">
-              <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML</p>
+              <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML. HTML is automatically sanitized for security.</p>
             </div>
           </div>
 

@@ -111,7 +111,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set production environment
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=3000
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
 # Create non-root user for security
 RUN groupadd --system --gid 1001 nodejs && \
@@ -134,7 +135,7 @@ EXPOSE 3000
 
 # Health check
 # Adjust endpoint based on your app (common: /api/health, /health, /healthz)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 # ============================================================================

@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import { AlertTriangle, CheckCircle2, XCircle, TrendingUp } from 'lucide-react'
 
 interface SEOAnalysisProps {
@@ -29,9 +28,9 @@ export function SEOAnalysis({
   slug,
   imageAlt
 }: SEOAnalysisProps) {
-  const analysis = useMemo(() => {
-    const checks: SEOCheck[] = []
-    let totalScore = 0
+  // Removed useMemo - 2025 best practice: only memoize when profiling shows performance issues
+  const checks: SEOCheck[] = []
+  let totalScore = 0
 
     // 1. Title Length Check (50-60 characters optimal)
     const titleToCheck = metaTitle || title
@@ -286,10 +285,8 @@ export function SEOAnalysis({
       })
     }
 
-    return { checks, totalScore, maxScore: 115 }
-  }, [title, metaTitle, metaDescription, content, focusKeyword, slug, imageAlt])
-
-  const scorePercentage = Math.round((analysis.totalScore / analysis.maxScore) * 100)
+  const maxScore = 115
+  const scorePercentage = Math.round((totalScore / maxScore) * 100)
   const scoreColor = scorePercentage >= 80 ? 'text-green-600' : scorePercentage >= 60 ? 'text-yellow-600' : 'text-red-600'
   const scoreBg = scorePercentage >= 80 ? 'bg-green-100 dark:bg-green-900/20' : scorePercentage >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/20' : 'bg-red-100 dark:bg-red-900/20'
 
@@ -306,7 +303,7 @@ export function SEOAnalysis({
       </div>
 
       <div className="space-y-3">
-        {analysis.checks.map((check, index) => (
+        {checks.map((check, index) => (
           <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
             <div className="mt-0.5">
               {check.status === 'pass' && <CheckCircle2 className="h-5 w-5 text-green-600" />}

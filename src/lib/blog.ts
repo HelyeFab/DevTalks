@@ -214,6 +214,13 @@ import { PaginationParams, PaginationResult, DEFAULT_PAGINATION, paginateArray }
 
 /**
  * Get all blog posts with pagination support
+ *
+ * IMPORTANT: This requires a composite index in Firestore:
+ * Collection: blog_posts
+ * Fields: published (Ascending), date (Descending)
+ *
+ * Create it with: firebase firestore:indexes
+ * Or via Firebase Console: Firestore -> Indexes -> Create Index
  */
 export async function getAllPosts(
   options: {
@@ -227,29 +234,60 @@ export async function getAllPosts(
     }
 
     const { publishedOnly = true, pagination = DEFAULT_PAGINATION } = options;
-
     const postsRef = collection(db, COLLECTION_NAME);
-    let q = query(postsRef);
 
-    // Note: Firestore requires composite indexes for queries with multiple conditions
-    // For now, we'll use a simpler approach to avoid index errors
-
-    // Start with a simple query - just sort by date
-    q = query(postsRef, orderBy('date', pagination.orderDirection || 'desc'));
+    // Build query with proper Firestore filtering (not in-memory)
+    // This requires a composite index: published (ASC) + date (DESC)
+    let q;
+    if (publishedOnly) {
+      // Use Firestore query instead of in-memory filtering for better performance
+      q = query(
+        postsRef,
+        where('published', '==', true),
+        orderBy('date', pagination.orderDirection || 'desc'),
+        limit(pagination.limit || DEFAULT_PAGINATION.limit)
+      );
+    } else {
+      q = query(
+        postsRef,
+        orderBy('date', pagination.orderDirection || 'desc'),
+        limit(pagination.limit || DEFAULT_PAGINATION.limit)
+      );
+    }
 
     // Execute the query
     const querySnapshot = await getDocs(q);
-    let allPosts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
+    const posts = querySnapshot.docs.map(doc => convertPost(doc.id, doc.data()));
 
-    // If we need to filter for published posts, do it in memory
-    if (publishedOnly) {
-      allPosts = allPosts.filter(post => post.published);
+    // Return paginated results (Firestore already limited the results)
+    return {
+      items: posts,
+      total: posts.length,
+      page: pagination.page || DEFAULT_PAGINATION.page,
+      limit: pagination.limit || DEFAULT_PAGINATION.limit,
+      hasMore: posts.length === (pagination.limit || DEFAULT_PAGINATION.limit)
+    };
+  } catch (error) {
+    console.error('Error getting posts:', error);
+
+    // If it's a missing index error, provide helpful instructions
+    if (error instanceof FirestoreError && error.code === 'failed-precondition') {
+      console.error(`
+        ⚠️  FIRESTORE INDEX REQUIRED ⚠️
+
+        This query requires a composite index. Create it by:
+
+        1. Go to Firebase Console -> Firestore -> Indexes
+        2. Click "Create Index"
+        3. Collection: blog_posts
+        4. Fields:
+           - published (Ascending)
+           - date (Descending)
+
+        Or run: firebase firestore:indexes
+      `);
     }
 
-    // Apply pagination
-    return paginateArray(allPosts, pagination);
-  } catch (error) {
-    console.error('Error getting posts:', error)
     throw new BlogError(
       'Failed to get posts',
       error as FirestoreError

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { Upload, FileText, Download, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { parseMarkdownWithFrontmatter, generateMarkdownTemplate, type ParsedMarkdown } from '@/lib/markdown-parser'
 
@@ -10,6 +10,7 @@ interface MarkdownImporterProps {
 }
 
 export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [status, setStatus] = useState<{
     type: 'idle' | 'success' | 'error'
@@ -108,7 +109,11 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg p-8 transition-all ${
+        onClick={() => {
+          console.log('Drag-drop area clicked')
+          fileInputRef.current?.click()
+        }}
+        className={`relative border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer ${
           isDragging
             ? 'border-primary bg-primary/5 scale-[1.02]'
             : 'border-border hover:border-primary/50 hover:bg-muted/30'
@@ -129,10 +134,11 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
           </div>
 
           <input
+            ref={fileInputRef}
             type="file"
             accept=".md,.markdown"
             onChange={handleFileInput}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="hidden"
             aria-label="Upload markdown file"
           />
 
@@ -140,9 +146,22 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
             <button
               type="button"
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
-                const input = e.currentTarget.parentElement?.parentElement?.querySelector('input[type="file"]') as HTMLInputElement
-                input?.click()
+                console.log('MarkdownImporter: Browse button clicked', {
+                  hasRef: !!fileInputRef.current,
+                  refElement: fileInputRef.current
+                })
+                if (fileInputRef.current) {
+                  fileInputRef.current.click()
+                  console.log('MarkdownImporter: File input click triggered')
+                } else {
+                  console.error('MarkdownImporter: File input ref is null!')
+                  setStatus({
+                    type: 'error',
+                    message: 'File picker not initialized. Please refresh the page.'
+                  })
+                }
               }}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
             >
@@ -153,6 +172,7 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
             <button
               type="button"
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 downloadTemplate()
               }}

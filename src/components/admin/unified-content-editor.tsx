@@ -20,7 +20,7 @@ import type { SEOMetadata } from '@/types/blog'
 import type { ParsedMarkdown } from '@/lib/markdown-parser'
 import type { ContentType } from '@/types/content'
 
-// Dynamically import the MDEditor and its styles
+// Dynamically import the MDEditor, sanitization, and styles
 const MDEditor = dynamic(
   () => {
     // Only import styles on client side
@@ -39,6 +39,15 @@ const MDEditor = dynamic(
     ),
   }
 )
+
+// Sanitization configuration
+// Import dynamically to avoid SSR issues
+let rehypeSanitize: any
+if (typeof window !== 'undefined') {
+  import('rehype-sanitize').then((mod) => {
+    rehypeSanitize = mod.default
+  })
+}
 
 interface Tag {
   id: string
@@ -117,10 +126,91 @@ export function UnifiedContentEditor({
   const [showImporter, setShowImporter] = useState(false)
   const [pendingImages, setPendingImages] = useState<Array<{ alt: string; src: string; isLocal: boolean }>>([])
   const [showImageUploader, setShowImageUploader] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
 
   useEffect(() => {
     setEditorMounted(true)
   }, [])
+
+  // Autosave functionality - save draft every 30 seconds
+  useEffect(() => {
+    // Don't autosave if there's no title or content
+    if (!title || !content || mode !== 'create') return
+
+    const autosaveInterval = setInterval(async () => {
+      try {
+        setIsSavingDraft(true)
+        console.log('Autosaving draft...', { title: title.substring(0, 30) })
+
+        // Save to localStorage as backup
+        const draftKey = `draft_${contentType}_${Date.now()}`
+        const draftData = {
+          title,
+          subtitle,
+          content,
+          tags: tags.map(t => t.name),
+          image,
+          imageAlt,
+          seo,
+          postDate,
+          contentType,
+          savedAt: new Date().toISOString()
+        }
+        localStorage.setItem('blog_editor_draft', JSON.stringify(draftData))
+        localStorage.setItem('blog_editor_draft_key', draftKey)
+
+        setLastSaved(new Date())
+        console.log('Draft autosaved to localStorage')
+      } catch (error) {
+        console.error('Autosave failed:', error)
+      } finally {
+        setIsSavingDraft(false)
+      }
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(autosaveInterval)
+  }, [title, subtitle, content, tags, image, imageAlt, seo, postDate, contentType, mode])
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    if (mode === 'create' && !title && !content) {
+      try {
+        const savedDraft = localStorage.getItem('blog_editor_draft')
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft)
+          const savedAt = new Date(draft.savedAt)
+          const hoursSinceLastSave = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60)
+
+          // Only restore if saved within last 24 hours
+          if (hoursSinceLastSave < 24) {
+            const shouldRestore = window.confirm(
+              `Found a draft saved ${Math.round(hoursSinceLastSave * 60)} minutes ago. Restore it?`
+            )
+
+            if (shouldRestore && draft.contentType === contentType) {
+              setTitle(draft.title || '')
+              setSubtitle(draft.subtitle || '')
+              setContent(draft.content || '')
+              setTags(draft.tags?.map((name: string, idx: number) => ({ id: `${Date.now()}-${idx}`, name })) || [])
+              setImage(draft.image || '')
+              setImageAlt(draft.imageAlt || '')
+              setSeo(draft.seo || seo)
+              setPostDate(draft.postDate || new Date().toISOString())
+              setLastSaved(savedAt)
+              console.log('Draft restored from localStorage')
+            }
+          } else {
+            // Clear old drafts
+            localStorage.removeItem('blog_editor_draft')
+            localStorage.removeItem('blog_editor_draft_key')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore draft:', error)
+      }
+    }
+  }, [mode, contentType])
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -271,7 +361,14 @@ export function UnifiedContentEditor({
         } else if (existingAnnouncement) {
           await updateAnnouncement({ ...announcementData, id: existingAnnouncement.id })
         }
-        router.push('/admin/announcements')
+
+        // Clear autosaved draft on successful publish
+        if (publish) {
+          localStorage.removeItem('blog_editor_draft')
+          localStorage.removeItem('blog_editor_draft_key')
+        }
+
+        router.push(contentType === 'post' ? '/admin/posts' : '/admin/announcements')
       }
     } catch (error) {
       console.error('Detailed error saving content:', error)
@@ -348,9 +445,26 @@ export function UnifiedContentEditor({
   return (
     <div className="container mx-auto px-4 max-w-7xl py-12">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          {mode === 'create' ? 'Create' : 'Edit'} {contentTypeDisplay}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold">
+            {mode === 'create' ? 'Create' : 'Edit'} {contentTypeDisplay}
+          </h1>
+          {lastSaved && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {isSavingDraft ? (
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                  Saving draft...
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  Draft saved at {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           {mode === 'create' && (
             <button
@@ -644,12 +758,15 @@ export function UnifiedContentEditor({
                   preview={editorMode}
                   height={500}
                   visibleDragbar={false}
+                  previewOptions={{
+                    rehypePlugins: rehypeSanitize ? [[rehypeSanitize]] : [],
+                  }}
                 />
               )}
             </div>
 
             <div className="mt-2 text-sm text-muted-foreground">
-              <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML</p>
+              <p className="mb-1"><strong>Tip:</strong> This editor supports both Markdown and HTML. HTML is automatically sanitized for security.</p>
             </div>
           </div>
 

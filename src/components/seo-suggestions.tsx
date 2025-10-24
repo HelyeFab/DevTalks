@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Lightbulb, Wand2, Calendar, TrendingUp, Copy, Check } from 'lucide-react'
 
 interface SEOSuggestionsProps {
@@ -40,9 +40,9 @@ export function SEOSuggestions({
 }: SEOSuggestionsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  const suggestions = useMemo(() => {
-    const suggs: Suggestion[] = []
-    const titleToCheck = metaTitle || title
+  // Removed useMemo - 2025 best practice: only memoize when profiling shows performance issues
+  const suggs: Suggestion[] = []
+  const titleToCheck = metaTitle || title
 
     // 1. Add Year to Title (Highest Priority from SEO Audit!)
     if (!titleToCheck.includes(CURRENT_YEAR.toString())) {
@@ -200,12 +200,11 @@ export function SEOSuggestions({
       })
     }
 
-    // Sort by priority
-    return suggs.sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 }
-      return priorityOrder[a.priority] - priorityOrder[b.priority]
-    })
-  }, [title, metaTitle, metaDescription, focusKeyword, tags])
+  // Sort by priority
+  const suggestions = suggs.sort((a, b) => {
+    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    return priorityOrder[a.priority] - priorityOrder[b.priority]
+  })
 
   const handleApply = (suggestion: Suggestion) => {
     onApplySuggestion(suggestion.type, suggestion.suggestion)
