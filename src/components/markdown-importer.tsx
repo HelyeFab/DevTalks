@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useState, useRef } from 'react'
-import { Upload, FileText, Download, AlertCircle, CheckCircle2, ClipboardPaste } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { FileText, Download, AlertCircle, CheckCircle2, ClipboardPaste } from 'lucide-react'
 import { parseMarkdownWithFrontmatter, generateMarkdownTemplate, type ParsedMarkdown } from '@/lib/markdown-parser'
 import { Modal } from '@/components/modal'
 
@@ -11,68 +11,12 @@ interface MarkdownImporterProps {
 }
 
 export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [showPasteModal, setShowPasteModal] = useState(false)
   const [pastedContent, setPastedContent] = useState('')
   const [status, setStatus] = useState<{
     type: 'idle' | 'success' | 'error'
     message: string
   }>({ type: 'idle', message: '' })
-
-  const handleFile = useCallback(async (file: File) => {
-    if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
-      setStatus({
-        type: 'error',
-        message: 'Please upload a markdown file (.md or .markdown)'
-      })
-      return
-    }
-
-    try {
-      const content = await file.text()
-      const parsed = parseMarkdownWithFrontmatter(content)
-
-      setStatus({
-        type: 'success',
-        message: `Successfully imported "${parsed.title}"`
-      })
-
-      // Call the import handler
-      onImport(parsed)
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setStatus({ type: 'idle', message: '' })
-      }, 3000)
-    } catch (error) {
-      console.error('Error parsing markdown:', error)
-      setStatus({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Failed to parse markdown file'
-      })
-    }
-  }, [onImport])
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-
-    const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) {
-      handleFile(files[0])
-    }
-  }, [handleFile])
 
   const handlePasteImport = useCallback(() => {
     if (!pastedContent.trim()) {
@@ -135,26 +79,8 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
 
   return (
     <div className={`space-y-4 ${className}`}>
-<<<<<<< HEAD
-      {/* Drag & Drop Area */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => {
-          console.log('Drag-drop area clicked')
-          fileInputRef.current?.click()
-        }}
-        className={`relative border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer ${
-          isDragging
-            ? 'border-primary bg-primary/5 scale-[1.02]'
-            : 'border-border hover:border-primary/50 hover:bg-muted/30'
-        }`}
-      >
-=======
       {/* Import Options */}
       <div className="relative border-2 border-dashed rounded-lg p-8 transition-all border-border hover:border-primary/50 hover:bg-muted/30">
->>>>>>> d76c76b (Add SEO assets, Google Search Console verification, and markdown importer improvements)
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           <div className="p-4 rounded-full bg-muted transition-colors">
             <ClipboardPaste className="h-8 w-8 text-muted-foreground" />
@@ -169,43 +95,10 @@ export function MarkdownImporter({ onImport, className = '' }: MarkdownImporterP
             </p>
           </div>
 
-<<<<<<< HEAD
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".md,.markdown"
-            onChange={handleFileInput}
-            className="hidden"
-            aria-label="Upload markdown file"
-          />
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                console.log('MarkdownImporter: Browse button clicked', {
-                  hasRef: !!fileInputRef.current,
-                  refElement: fileInputRef.current
-                })
-                if (fileInputRef.current) {
-                  fileInputRef.current.click()
-                  console.log('MarkdownImporter: File input click triggered')
-                } else {
-                  console.error('MarkdownImporter: File input ref is null!')
-                  setStatus({
-                    type: 'error',
-                    message: 'File picker not initialized. Please refresh the page.'
-                  })
-                }
-              }}
-=======
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setShowPasteModal(true)}
->>>>>>> d76c76b (Add SEO assets, Google Search Console verification, and markdown importer improvements)
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
             >
               <ClipboardPaste className="h-4 w-4" />
