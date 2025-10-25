@@ -152,8 +152,7 @@ export const metadata: Metadata = {
     'theme-color': '#ffffff',
   },
   verification: {
-    // Add verification tokens when available
-    // google: 'your-google-verification-code',
+    google: 'o8OaG7SjA0OYd4onBvimOECarmau3kVN9-iQQfRtgXg',
     // yandex: 'your-yandex-verification-code',
     // bing: 'your-bing-verification-code',
     // other: {
